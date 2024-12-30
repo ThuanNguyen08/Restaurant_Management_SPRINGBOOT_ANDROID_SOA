@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+
+    <!-- Thêm màu mới cho trạng thái bàn -->
+    <color name="occupied_table">#FF4444</color>  <!-- Đỏ cho bàn đã có người -->
+    <color name="available_table">#4CAF50</color> <!-- Xanh lá cho bàn trống -->
+</resources>

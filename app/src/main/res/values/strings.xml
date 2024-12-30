@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">QLNH_TTT</string>
+    <string name="opentoggle">Mở menu</string>
+    <string name="closetoggle">Đóng menu</string>
+</resources>

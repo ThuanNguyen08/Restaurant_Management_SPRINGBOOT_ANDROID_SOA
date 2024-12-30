@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:padding="10dp"
+    android:layout_marginBottom="20dp">
+
+    <TextView
+        android:id="@+id/txt_customtable_TenBanAn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:textColor="@color/black"
+        android:layout_centerHorizontal="true"
+        />
+    <ImageView
+        android:id="@+id/img_customtable_BanAn"
+        android:layout_width="140dp"
+        android:layout_height="120dp"
+        android:layout_below="@+id/txt_customtable_TenBanAn"
+        android:src="@drawable/icon_banan" />
+    <ImageView
+        android:id="@+id/img_GoiMon"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:padding="5dp"
+        android:layout_below="@id/img_customtable_BanAn"
+        android:layout_marginLeft="6dp"
+        android:visibility="visible"
+        android:src="@drawable/icon_order" />
+    <ImageView
+        android:id="@+id/img_ThanhToan"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:padding="5dp"
+        android:layout_below="@id/img_customtable_BanAn"
+        android:layout_toRightOf="@id/img_GoiMon"
+        android:layout_marginLeft="12dp"
+        android:visibility="visible"
+        android:src="@drawable/icon_payment"/>
+    <ImageView
+        android:id="@+id/img_XoaBan"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:padding="5dp"
+        android:layout_below="@id/img_customtable_BanAn"
+        android:layout_toRightOf="@id/img_ThanhToan"
+        android:layout_marginLeft="12dp"
+        android:visibility="visible"
+        android:src="@drawable/icon_delete" />
+
+</RelativeLayout>
