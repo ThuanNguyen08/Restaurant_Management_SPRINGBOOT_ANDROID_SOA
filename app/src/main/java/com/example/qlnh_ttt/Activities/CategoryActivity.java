@@ -4,12 +4,14 @@ import androidx.appcompat.app.AlertDialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.qlnh_ttt.AccoutType.AccoutType;
 import com.example.qlnh_ttt.Adapters.CategoryAdapter;
 import com.example.qlnh_ttt.Entities.DmFood;
 import com.example.qlnh_ttt.R;
@@ -37,7 +39,7 @@ public class CategoryActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.viewcategory_layout);
         categoryList = new ArrayList<>();
-
+        CheckAccount();
         initViews();
         setupRecyclerView();
         loadCategoryList();
@@ -186,6 +188,22 @@ public class CategoryActivity extends AppCompatActivity {
         if (categoryList != null) {
             loadCategoryList();
         }
+    }
+
+    public void CheckAccount(){
+        new Thread(() -> {
+            boolean isUser = AccoutType.isUser(CategoryActivity.this);
+
+            runOnUiThread(() -> {
+                if(isUser){
+                    btnAddDanhMuc.setVisibility(View.GONE);
+                    btnAddThucDon.setVisibility(View.GONE);
+                } else {
+                    btnAddDanhMuc.setVisibility(View.VISIBLE);
+                    btnAddThucDon.setVisibility(View.VISIBLE);
+                }
+            });
+        }).start();
     }
 
 }

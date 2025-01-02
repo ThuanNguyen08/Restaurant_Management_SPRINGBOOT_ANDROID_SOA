@@ -2,6 +2,8 @@ package com.example.qlnh_ttt.Adapters;
 
 import android.content.Context;
 import android.content.Intent;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -11,6 +13,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.qlnh_ttt.AccoutType.AccoutType;
 import com.example.qlnh_ttt.Activities.FoodListActivity;
 import com.example.qlnh_ttt.Activities.ItemCategoryActivity;
 import com.example.qlnh_ttt.Activities.UpdateCategoryActivity;
@@ -21,7 +24,7 @@ import java.util.ArrayList;
 
 public class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.CategoryViewHolder> {
 
-    private Context context;
+    private static Context context;
     private ArrayList<DmFood> categoryList;
     private OnDeleteClickListener deleteClickListener;
 
@@ -41,6 +44,22 @@ public class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.Catego
             txtCategoryName = itemView.findViewById(R.id.txtCategoryName);
             btnDeleteCategory = itemView.findViewById(R.id.btnDeleteCategory);
             btnUpdateCategory = itemView.findViewById(R.id.btnUpdateCategory);
+
+            // Check role trong thread riêng
+            Handler handler = new Handler(Looper.getMainLooper());
+            new Thread(() -> {
+                boolean isUser = AccoutType.isUser(context);
+                handler.post(() -> {
+                    if(isUser) {
+                        btnUpdateCategory.setVisibility(View.GONE);
+                        btnDeleteCategory.setVisibility(View.GONE);
+                    } else {
+                        btnUpdateCategory.setVisibility(View.VISIBLE);
+                        btnDeleteCategory.setVisibility(View.VISIBLE);
+                    }
+                });
+            }).start();
+
         }
     }
 

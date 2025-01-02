@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Base64;
 import android.util.Log;
+import android.view.View;
 import android.widget.Button;
 import android.content.SharedPreferences;
 import android.widget.Toast;
@@ -13,6 +14,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.qlnh_ttt.AccoutType.AccoutType;
 import com.example.qlnh_ttt.Adapters.FoodListAdapter;
 import com.example.qlnh_ttt.Entities.Food;
 import com.example.qlnh_ttt.R;
@@ -43,7 +45,7 @@ public class FoodListActivity extends AppCompatActivity {
         rvFoodList = findViewById(R.id.rvFoodList);
         btnAddFood = findViewById(R.id.btnAddFood);
         foodList = new ArrayList<Food>();
-
+        CheckAccount();
         setupRecyclerView();
         loadFoodList();
 
@@ -182,5 +184,19 @@ public class FoodListActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         loadFoodList(); // Reload danh sách khi quay lại màn hình
+    }
+
+    public void CheckAccount(){
+        new Thread(() -> {
+            boolean isUser = AccoutType.isUser(FoodListActivity.this);
+
+            runOnUiThread(() -> {
+                if(isUser){
+                    btnAddFood.setVisibility(View.GONE);
+                } else {
+                    btnAddFood.setVisibility(View.VISIBLE);
+                }
+            });
+        }).start();
     }
 }

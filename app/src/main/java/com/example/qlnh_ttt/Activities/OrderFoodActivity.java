@@ -3,8 +3,15 @@ package com.example.qlnh_ttt.Activities;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.Handler;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Base64;
 import android.util.Log;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
@@ -13,7 +20,9 @@ import android.widget.Button;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
+import com.example.qlnh_ttt.AccoutType.AccoutType;
 import com.example.qlnh_ttt.Adapters.OrderFoodAdapter;
+import com.example.qlnh_ttt.Entities.DmFood;
 import com.example.qlnh_ttt.Entities.Food;
 import com.example.qlnh_ttt.Entities.BillDetail;
 import com.example.qlnh_ttt.R;
@@ -27,6 +36,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -41,6 +51,12 @@ public class OrderFoodActivity extends AppCompatActivity {
     private int tableId;
     private Integer billId = null;
     private Integer existingBillId = null;
+
+    private Spinner spinnerDmFood;
+    private List<DmFood> danhMucList;
+    private ArrayAdapter<String> categoryAdapter;
+
+    private static final long SEARCH_DELAY = 300;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,18 +78,163 @@ public class OrderFoodActivity extends AppCompatActivity {
         checkExistingBill();
     }
 
+
+    // Thêm method để load danh mục
+    private void loadCategories() {
+        new Thread(() -> {
+            try {
+                SharedPreferences sharedPreferences = getSharedPreferences("AppPrefs", MODE_PRIVATE);
+                String token = sharedPreferences.getString("auth_token", "");
+
+                URL url = new URL("http://172.16.1.2:8082/api/v1/dmFood");
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("GET");
+                conn.setRequestProperty("Authorization", "Bearer " + token);
+
+                int responseCode = conn.getResponseCode();
+                if (responseCode == HttpURLConnection.HTTP_OK) {
+                    BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+                    StringBuilder response = new StringBuilder();
+                    String line;
+                    while ((line = in.readLine()) != null) {
+                        response.append(line);
+                    }
+                    in.close();
+
+                    JSONArray jsonArray = new JSONArray(response.toString());
+                    List<DmFood> categories = new ArrayList<>();
+                    List<String> categoryNames = new ArrayList<>();
+                    categoryNames.add("Tất cả");
+
+                    for (int i = 0; i < jsonArray.length(); i++) {
+                        JSONObject obj = jsonArray.getJSONObject(i);
+                        DmFood danhMuc = new DmFood();
+                        danhMuc.setDmFoodId(obj.getInt("dmFoodId"));
+                        danhMuc.setCategoryName(obj.getString("categoryName"));
+                        categories.add(danhMuc);
+                        categoryNames.add(danhMuc.getCategoryName());
+                    }
+
+                    runOnUiThread(() -> {
+                        danhMucList.clear();
+                        danhMucList.addAll(categories);
+                        categoryAdapter.clear();
+                        categoryAdapter.addAll(categoryNames);
+                        categoryAdapter.notifyDataSetChanged();
+                    });
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Error loading categories: " + e.getMessage());
+            }
+        }).start();
+    }
     private void initViews() {
         txtTableInfo = findViewById(R.id.txtTableInfo);
         rvFoodOrder = findViewById(R.id.rvFoodOrder);
         btnConfirmOrder = findViewById(R.id.btnConfirmOrder);
+        spinnerDmFood = findViewById(R.id.spinnerDmFood);
         foodList = new ArrayList<>();
         orderItems = new ArrayList<>();
+        danhMucList = new ArrayList<>();
+
+        // Khởi tạo adapter cho Spinner
+        categoryAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item);
+        categoryAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerDmFood.setAdapter(categoryAdapter);
+        loadCategories();
+
+
+        // Xử lý sự kiện khi chọn danh mục
+        spinnerDmFood.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+
+                if (position == 0) {
+                    // Nếu chọn "Tất cả"
+                    loadFoodMenu();
+                } else {
+                    // Lấy danh mục được chọn và load món ăn theo danh mục
+                    DmFood selectedCategory = danhMucList.get(position - 1);
+                    loadFoodsByCategory(selectedCategory.getDmFoodId());
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                // Không làm gì
+            }
+        });
+
+
+
+
     }
 
+    private void loadFoodsByCategory(int categoryId) {
+        new Thread(() -> {
+            try {
+                SharedPreferences sharedPreferences = getSharedPreferences("AppPrefs", MODE_PRIVATE);
+                String token = sharedPreferences.getString("auth_token", "");
+
+                URL url = new URL("http://172.16.1.2:8083/api/v1/food/category/" + categoryId);
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("GET");
+                conn.setRequestProperty("Authorization", "Bearer " + token);
+
+                int responseCode = conn.getResponseCode();
+                if (responseCode == HttpURLConnection.HTTP_OK) {
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+                    StringBuilder response = new StringBuilder();
+                    String line;
+
+                    while ((line = reader.readLine()) != null) {
+                        response.append(line);
+                    }
+
+                    JSONArray jsonArray = new JSONArray(response.toString());
+                    List<Food> newFoodList = new ArrayList<>();
+
+                    for (int i = 0; i < jsonArray.length(); i++) {
+                        JSONObject jsonObject = jsonArray.getJSONObject(i);
+                        Food food = new Food();
+                        food.setFoodID(jsonObject.getInt("foodID"));
+                        food.setFoodName(jsonObject.getString("foodName"));
+                        food.setDmFoodID(jsonObject.getInt("dmFoodID"));
+                        food.setPrice(jsonObject.getString("price"));
+
+                        if (!jsonObject.isNull("avtFood")) {
+                            String base64Image = jsonObject.getString("avtFood");
+                            byte[] imageBytes = Base64.decode(base64Image, Base64.DEFAULT);
+                            food.setAvtFood(imageBytes);
+                        }
+
+                        newFoodList.add(food);
+                    }
+
+                    runOnUiThread(() -> {
+                        foodList.clear();
+                        foodList.addAll(newFoodList);
+                        updateAdapterWithOrderItems();
+                    });
+                }
+                else if(responseCode == HttpURLConnection.HTTP_NOT_FOUND){
+                    runOnUiThread(() -> {
+                        foodList.clear();
+                        updateAdapterWithOrderItems();
+                    });
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Error loading foods by category: " + e.getMessage());
+                runOnUiThread(() -> {
+                    Toast.makeText(OrderFoodActivity.this, "Lỗi tải danh sách món ăn", Toast.LENGTH_SHORT).show();
+                });
+            }
+        }).start();
+    }
     private void getIntentData() {
         tableId = getIntent().getIntExtra("table_id", -1);
         String tableName = getIntent().getStringExtra("table_name");
-        txtTableInfo.setText("Bàn " + tableName);
+        txtTableInfo.setText(tableName);
     }
 
     private void setupRecyclerView() {

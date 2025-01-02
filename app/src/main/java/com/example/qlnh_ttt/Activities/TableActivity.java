@@ -10,6 +10,7 @@ import android.widget.GridView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.qlnh_ttt.AccoutType.AccoutType;
 import com.example.qlnh_ttt.Adapters.TableAdapter;
 import com.example.qlnh_ttt.Entities.Table;
 import com.example.qlnh_ttt.R;
@@ -38,6 +39,7 @@ public class TableActivity extends AppCompatActivity {
         gvDisplayTable = findViewById(R.id.gvDisplayTable);
         btnAddTable = findViewById(R.id.btnAddTable);
         tableList = new ArrayList<>();
+        CheckAccount();
 
         btnAddTable.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -152,6 +154,20 @@ public class TableActivity extends AppCompatActivity {
         super.onResume();
         tableList.clear();
         loadTables(); // Reload tables when returning to this screen
+    }
+
+    public void CheckAccount(){
+        new Thread(() -> {
+            boolean isUser = AccoutType.isUser(TableActivity.this);
+
+            runOnUiThread(() -> {
+                if(isUser){
+                    btnAddTable.setVisibility(View.GONE);
+                } else {
+                    btnAddTable.setVisibility(View.VISIBLE);
+                }
+            });
+        }).start();
     }
 
 }

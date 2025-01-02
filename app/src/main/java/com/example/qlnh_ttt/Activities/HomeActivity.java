@@ -31,6 +31,7 @@ import java.text.NumberFormat;
 import java.util.Locale;
 import java.time.LocalDate;
 
+import com.example.qlnh_ttt.AccoutType.AccoutType;
 import com.example.qlnh_ttt.Adapters.BillAdapter;
 import com.example.qlnh_ttt.Entities.Bill;
 import com.example.qlnh_ttt.R;
@@ -64,7 +65,11 @@ public class HomeActivity extends AppCompatActivity {
         txtTotalRevenue = findViewById(R.id.txt_total_revenue);
         txtBillCount = findViewById(R.id.txt_bill_count);
         txtAllDoanhThu = findViewById(R.id.txt_allDoanhThu);
+<<<<<<< HEAD
 
+=======
+        CheckAccount();
+>>>>>>> 29f471256c5eddec99d6bd26f1ae0cea329e2753
 
         //sự kiện click cho nút logout
         btnLogout.setOnClickListener(new View.OnClickListener() {
@@ -110,6 +115,10 @@ public class HomeActivity extends AppCompatActivity {
             }
         });
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 29f471256c5eddec99d6bd26f1ae0cea329e2753
 
 
         // Thiết lập RecyclerView
@@ -240,4 +249,20 @@ public class HomeActivity extends AppCompatActivity {
         super.onResume();
         loadTodayBills();
     }
+
+    public void CheckAccount(){
+        new Thread(() -> {
+            boolean isUser = AccoutType.isUser(HomeActivity.this);
+
+            runOnUiThread(() -> {
+                if(isUser){
+                    txtAllDoanhThu.setVisibility(View.GONE);
+                } else {
+                    txtAllDoanhThu.setVisibility(View.VISIBLE);
+                }
+            });
+        }).start();
+    }
+
+
 }

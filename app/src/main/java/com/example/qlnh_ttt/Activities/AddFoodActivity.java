@@ -11,10 +11,12 @@ import android.os.Bundle;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
+import android.widget.Spinner;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -24,26 +26,38 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import com.example.qlnh_ttt.Entities.DmFood;
 import com.example.qlnh_ttt.R;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 
 public class AddFoodActivity extends AppCompatActivity {
     private static final String TAG = "UploadImageActivity";
     private static final int PERMISSION_REQUEST_CODE = 100;
     private static final String UPLOAD_URL = "http://172.16.1.2:8083/api/v1/food/add";
-
+    private int dmFoodID;
     private ImageView imageView;
     private Button btnChooseImage, btnUpload;
     private ProgressBar progressBar;
     private EditText edtFoodName, edtPrice, edtDmFoodID;
     private Uri selectedImageUri;
+
+    // Thêm các biến mới vào đầu class
+    private Spinner spinnerDmFood;
+    private List<DmFood> danhMucList;
+    private ArrayAdapter<String> adapter;
+    private static final String GET_CATEGORIES_URL = "http://172.16.1.2:8083/api/v1/dmFood";
 
     private final ActivityResultLauncher<Intent> imagePickerLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
@@ -79,8 +93,19 @@ public class AddFoodActivity extends AppCompatActivity {
         progressBar = findViewById(R.id.progressBar);
         edtFoodName = findViewById(R.id.edtFoodName);
         edtPrice = findViewById(R.id.edtPrice);
-        edtDmFoodID = findViewById(R.id.edtDmFoodID);
+        spinnerDmFood = findViewById(R.id.spinnerDmFood);
+//        edtDmFoodID = findViewById(R.id.edtDmFoodID);
         btnUpload.setEnabled(false);
+
+
+        // Khởi tạo adapter cho Spinner
+        danhMucList = new ArrayList<>();
+        adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerDmFood.setAdapter(adapter);
+
+        // Gọi API để lấy danh sách danh mục
+        fetchCategories();
     }
 
     private void setupListeners() {
@@ -133,9 +158,17 @@ public class AddFoodActivity extends AppCompatActivity {
 
         String foodName = edtFoodName.getText().toString().trim();
         String price = edtPrice.getText().toString().trim();
-        String dmFoodID = edtDmFoodID.getText().toString().trim();
 
-        if (foodName.isEmpty() || price.isEmpty() || dmFoodID.isEmpty()) {
+        // Lấy ID danh mục từ item được chọn trong Spinner
+        int selectedPosition = spinnerDmFood.getSelectedItemPosition();
+        if (selectedPosition == -1 || danhMucList.isEmpty()) {
+            Toast.makeText(this, "Vui lòng chọn danh mục", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        dmFoodID = danhMucList.get(selectedPosition).getDmFoodId();
+
+
+        if (foodName.isEmpty() || price.isEmpty() ) {
             Toast.makeText(this, "Vui lòng nhập đầy đủ thông tin", Toast.LENGTH_SHORT).show();
             return;
         }
@@ -162,7 +195,7 @@ public class AddFoodActivity extends AppCompatActivity {
 
                 JSONObject jsonRequest = new JSONObject();
                 jsonRequest.put("foodName", foodName);
-                jsonRequest.put("dmFoodID", Integer.parseInt(dmFoodID));
+                jsonRequest.put("dmFoodID", dmFoodID);
                 jsonRequest.put("price", price);
                 jsonRequest.put("avtFood", base64Image);  // Gửi dạng base64 string
 
@@ -214,7 +247,7 @@ public class AddFoodActivity extends AppCompatActivity {
 
     }
 
-    // Cải thiện phương thức convertImageToBytes để xử lý ảnh tốt hơn
+    // Convert Image sang Byte
     private byte[] convertImageToBytes(Uri imageUri) throws IOException {
         Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), imageUri);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -225,24 +258,12 @@ public class AddFoodActivity extends AppCompatActivity {
     private void clearForm() {
         edtFoodName.setText("");
         edtPrice.setText("");
-        edtDmFoodID.setText("");
+//        edtDmFoodID.setText("");
         imageView.setImageDrawable(null);  // Thay thế dòng setImageResource
         selectedImageUri = null;
         btnUpload.setEnabled(false);
     }
 
-    /*private byte[] convertImageToBytes(Uri imageUri) throws IOException {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        FileInputStream fis = new FileInputStream(getPath(imageUri));
-
-        byte[] buffer = new byte[1024];
-        int length;
-        while ((length = fis.read(buffer)) > 0) {
-            baos.write(buffer, 0, length);
-        }
-
-        return baos.toByteArray();
-    }*/
 
     private String getPath(Uri uri) {
         String[] projection = {MediaStore.Images.Media.DATA};
@@ -262,5 +283,70 @@ public class AddFoodActivity extends AppCompatActivity {
         Intent intent = new Intent(AddFoodActivity.this, LoginActivity.class);
         startActivity(intent);
         finish();
+    }
+
+
+
+    // Thêm method mới để lấy danh mục từ API
+    private void fetchCategories() {
+        new Thread(() -> {
+            try {
+                SharedPreferences sharedPreferences = getSharedPreferences("AppPrefs", MODE_PRIVATE);
+                String token = sharedPreferences.getString("auth_token", "");
+
+                URL url = new URL("http://172.16.1.2:8082/api/v1/dmFood");
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("GET");
+                conn.setRequestProperty("Authorization", "Bearer " + token);
+
+                int responseCode = conn.getResponseCode();
+                if (responseCode == HttpURLConnection.HTTP_OK) {
+                    // Đọc response
+                    BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+                    String inputLine;
+                    StringBuilder response = new StringBuilder();
+                    while ((inputLine = in.readLine()) != null) {
+                        response.append(inputLine);
+                    }
+                    in.close();
+
+                    // Parse JSON
+                    JSONArray jsonArray = new JSONArray(response.toString());
+                    List<DmFood> categories = new ArrayList<>();
+                    List<String> categoryNames = new ArrayList<>();
+
+                    for (int i = 0; i < jsonArray.length(); i++) {
+                        JSONObject obj = jsonArray.getJSONObject(i);
+                        DmFood danhMuc = new DmFood();
+                        danhMuc.setDmFoodId(obj.getInt("dmFoodId"));
+                        danhMuc.setCategoryName(obj.getString("categoryName"));
+                        categories.add(danhMuc);
+                        categoryNames.add(danhMuc.getCategoryName());
+                    }
+
+                    runOnUiThread(() -> {
+                        danhMucList.clear();
+                        danhMucList.addAll(categories);
+                        adapter.clear();
+                        adapter.addAll(categoryNames);
+                        adapter.notifyDataSetChanged();
+                    });
+                } else if (responseCode == HttpURLConnection.HTTP_UNAUTHORIZED) {
+                    runOnUiThread(() -> {
+                        Toast.makeText(AddFoodActivity.this,
+                                "Phiên đăng nhập hết hạn",
+                                Toast.LENGTH_SHORT).show();
+                        goToLogin();
+                    });
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Error fetching categories: " + e.getMessage());
+                runOnUiThread(() -> {
+                    Toast.makeText(AddFoodActivity.this,
+                            "Lỗi khi tải danh mục: " + e.getMessage(),
+                            Toast.LENGTH_SHORT).show();
+                });
+            }
+        }).start();
     }
 }
