@@ -5,9 +5,11 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -50,6 +52,27 @@ public class FoodController {
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Có lỗi xảy ra rồi ");
 		}
 	}
+	
+	@GetMapping("/category/{dmFoodID}")
+	public ResponseEntity<?> getFoodsByCategory(@RequestHeader("Authorization") String token, @PathVariable int dmFoodID) {
+	    try {
+	        // Xác thực token
+	        Authentication(token);
+
+	        // Lấy danh sách món ăn theo danh mục
+	        List<Food> foods = service.getFoodsByCategory(dmFoodID);
+
+	        // Kiểm tra danh sách có rỗng hay không
+	        if (foods == null || foods.isEmpty()) {
+	            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Không tìm thấy món ăn nào trong danh mục này.");
+	        }
+
+	        // Trả về danh sách món ăn
+	        return ResponseEntity.ok(foods);
+	    } catch (Exception e) {
+	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Có lỗi xảy ra: " + e.getMessage());
+	    }
+	}
 
 	@PostMapping("/add")
     public ResponseEntity<?> addFood(@RequestHeader("Authorization") String token, @RequestBody Food food) {
@@ -68,4 +91,50 @@ public class FoodController {
                     .body("Có lỗi xảy ra: " + e.getMessage());
         }
     }
+	
+	@PutMapping("/update/{foodId}")
+	public ResponseEntity<?> updateFood(@RequestHeader("Authorization") String token, @PathVariable int foodId, @RequestBody Food updatedFood) {
+	    try {
+	        // Xác thực token
+	        Authentication(token);
+
+	        // Tìm món ăn theo ID
+	        Food existingFood = service.findById(foodId);
+	        if (existingFood == null) {
+	            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Không tìm thấy món ăn với ID: " + foodId);
+	        }
+
+	        // Cập nhật thông tin món ăn
+	        existingFood.setFoodName(updatedFood.getFoodName());
+	        existingFood.setPrice(updatedFood.getPrice());
+	        existingFood.setDmFoodID(updatedFood.getDmFoodID());
+
+	        // Lưu lại thay đổi
+	        service.updateFood(existingFood);
+
+	        return ResponseEntity.ok("Cập nhật món ăn thành công: " + existingFood.getFoodName());
+	    } catch (Exception e) {
+	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Có lỗi xảy ra: " + e.getMessage());
+	    }
+	}
+	
+	@DeleteMapping("/{foodID}")
+	public ResponseEntity<?> deleteFood(@RequestHeader("Authorization") String token, @PathVariable int foodID) {
+	    try {
+	        // Xác thực token
+	        Authentication(token);
+
+	        // Xóa món ăn theo ID
+	        boolean isDeleted = service.deleteFood(foodID);
+
+	        if (isDeleted) {
+	            return ResponseEntity.ok("Xóa món ăn thành công với ID: " + foodID);
+	        } else {
+	            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Không tìm thấy món ăn với ID: " + foodID);
+	        }
+	    } catch (Exception e) {
+	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Có lỗi xảy ra: " + e.getMessage());
+	    }
+	}
+
 }

@@ -50,4 +50,23 @@ public class FoodService {
 		
 		repo.save(foods);
 	}
+	
+	public List<Food> getFoodsByCategory(int dmFoodID) {
+	    return repo.findByDmFoodID(dmFoodID);
+	}
+	
+	public Food updateFood(Food food) {
+        // Lưu thông tin món ăn đã cập nhật
+        return repo.save(food);
+    }
+	
+	public boolean deleteFood(int foodID) {
+        // Kiểm tra xem món ăn có tồn tại hay không
+        if (repo.existsById(foodID)) {
+            // Xóa món ăn
+            repo.deleteById(foodID);
+            return true;
+        }
+        return false;
+    }
 }
