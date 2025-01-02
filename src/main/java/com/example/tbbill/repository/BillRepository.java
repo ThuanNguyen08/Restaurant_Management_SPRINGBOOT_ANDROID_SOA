@@ -1,6 +1,7 @@
 package com.example.tbbill.repository;
 
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -14,4 +15,9 @@ public interface BillRepository extends JpaRepository<Bill, Integer> {
     Optional<Bill> findByTableIDAndStatus(Integer tableId, String status);
     List<Bill> findByStatus(String status);
     List<Bill> findByUserInfoID(Integer userInfoId);
+    List<Bill> findByStatusAndBillDateBetweenOrderByBillDateDesc(
+            String status, 
+            LocalDateTime startDate, 
+            LocalDateTime endDate
+        );
 }

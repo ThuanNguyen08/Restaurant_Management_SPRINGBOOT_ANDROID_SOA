@@ -1,12 +1,27 @@
 package com.example.tbbill.controller;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
+
 import com.example.tbbill.entities.Bill;
+import com.example.tbbill.repository.BillRepository;
 import com.example.tbbill.service.BillService;
 import com.example.tbbill.service.RequestOtherPortService;
 
@@ -16,6 +31,9 @@ public class BillController {
     @Autowired
     private BillService billService;
 
+    @Autowired
+    private BillRepository billRepository;
+    
     @Autowired
     private RequestOtherPortService requestOtherPortService;
 
@@ -39,6 +57,41 @@ public class BillController {
         }
     }
 
+    //lấy danh sách bill theo ngày
+    @GetMapping("/paid-bills")
+    public ResponseEntity<?> getPaidBillsByDate(
+            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate date,
+            @RequestHeader("Authorization") String token) {
+        try {
+            Authentication(token);
+            
+            // Chuyển đổi từ LocalDate sang LocalDateTime để lấy cả ngày
+            LocalDateTime startOfDay = date.atStartOfDay();
+            LocalDateTime endOfDay = date.atTime(23, 59, 59);
+            
+            List<Bill> paidBills = billRepository.findByStatusAndBillDateBetweenOrderByBillDateDesc(
+                "PAID", 
+                startOfDay, 
+                endOfDay
+            );
+
+            // Kiểm tra nếu không có dữ liệu
+            if (paidBills.isEmpty()) {
+                return new ResponseEntity<>(
+                    "Không có hóa đơn đã thanh toán cho ngày " + date, 
+                    HttpStatus.NO_CONTENT
+                );
+            }
+
+            return ResponseEntity.ok(paidBills);
+            
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body("Lỗi: " + e.getMessage());
+        }
+    }
+    
+    
     // Lấy bill theo ID
     @GetMapping("/{id}")
     public ResponseEntity<?> getBillById(
