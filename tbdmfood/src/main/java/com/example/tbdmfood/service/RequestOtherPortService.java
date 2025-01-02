@@ -22,4 +22,12 @@ public class RequestOtherPortService {
 		return restTemplate.exchange(url, HttpMethod.GET, entity, Boolean.class).getBody();
 	}
 	
+	public void deleteFoodsByCategory(String token, int dmFoodId) {
+	    String url = "http://localhost:8083/api/v1/food/category/delete/" + dmFoodId;
+	    HttpHeaders headers = new HttpHeaders();
+	    headers.set("Authorization", token); 
+	    HttpEntity<String> entity = new HttpEntity<>(headers);
+	    
+	    restTemplate.exchange(url, HttpMethod.DELETE, entity, String.class);
+	}
 }

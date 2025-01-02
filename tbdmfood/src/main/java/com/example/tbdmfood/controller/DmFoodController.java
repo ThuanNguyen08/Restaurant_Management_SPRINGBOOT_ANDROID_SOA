@@ -75,6 +75,7 @@ public class DmFoodController {
 		try {
 			Authentication(token);
 			if (service.deleteById(id)) {
+				RequestOtherPortService.deleteFoodsByCategory(token, id);
 				return ResponseEntity.status(HttpStatus.OK).body("Xóa thành công");
 			} else {
 				return ResponseEntity.status(HttpStatus.OK).body("Xóa thất bại");
@@ -84,4 +85,6 @@ public class DmFoodController {
 		}
 	}
 
+	
+	
 }
