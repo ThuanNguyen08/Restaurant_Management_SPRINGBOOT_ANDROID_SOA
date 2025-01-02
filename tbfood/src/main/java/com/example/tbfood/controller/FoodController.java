@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.example.tbfood.entities.Food;
+import com.example.tbfood.repository.FoodRepository;
 import com.example.tbfood.service.FoodService;
 import com.example.tbfood.service.RequestOtherPortService;
 
@@ -26,6 +27,9 @@ public class FoodController {
 	
 	@Autowired
 	private FoodService service;
+	
+	@Autowired
+	private FoodRepository foodRepository;
 	
 	@Autowired
 	private RequestOtherPortService RequestOtherPortService;
@@ -52,6 +56,8 @@ public class FoodController {
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Có lỗi xảy ra rồi ");
 		}
 	}
+	
+
 	
 	@GetMapping("/category/{dmFoodID}")
 	public ResponseEntity<?> getFoodsByCategory(@RequestHeader("Authorization") String token, @PathVariable int dmFoodID) {
@@ -136,5 +142,23 @@ public class FoodController {
 	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Có lỗi xảy ra: " + e.getMessage());
 	    }
 	}
-
+	/// Xóa tất cả món ăn theo danh mục
+	@DeleteMapping("/category/delete/{dmFoodID}")
+	public ResponseEntity<?> deleteFoodsByCategory(@RequestHeader("Authorization") String token, @PathVariable int dmFoodID) {
+	    try {
+	        Authentication(token);
+	        
+	        List<Food> foods = service.getFoodsByCategory(dmFoodID);
+	       
+	        for (Food food : foods) {
+	            service.deleteFood(food.getFoodID());
+	        }
+	        
+	        return ResponseEntity.ok("Đã xóa tất cả món ăn thuộc danh mục: " + dmFoodID);
+	    } catch (Exception e) {
+	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+	                .body("Có lỗi xảy ra khi xóa món ăn: " + e.getMessage());
+	    }
+	
+	}
 }

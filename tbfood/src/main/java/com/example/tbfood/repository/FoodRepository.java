@@ -12,5 +12,6 @@ import com.example.tbfood.entities.Food;
 public interface FoodRepository  extends JpaRepository<Food, Integer>{
 	Optional<Food> findByFoodID(int id);
 	List<Food> findByDmFoodID(int dmFoodID);
+	List<Food> findByFoodNameContainingIgnoreCase(String name);
 	
 }
