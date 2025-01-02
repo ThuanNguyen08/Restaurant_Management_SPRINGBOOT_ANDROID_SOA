@@ -13,9 +13,12 @@ import android.widget.Toast;
 import com.example.qlnh_ttt.Activities.FoodListActivity;
 import com.example.qlnh_ttt.Activities.OrderFoodActivity;
 import com.example.qlnh_ttt.Activities.PaymentActivity;
+import com.example.qlnh_ttt.Activities.TableActivity;
 import com.example.qlnh_ttt.Entities.Table;
 import com.example.qlnh_ttt.R;
 
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
 
 public class TableAdapter extends BaseAdapter {
@@ -83,7 +86,14 @@ public class TableAdapter extends BaseAdapter {
         });
 
         imgDelete.setOnClickListener(v -> {
-
+            android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(context);
+            builder.setTitle("Xác nhận xóa")
+                    .setMessage("Bạn có chắc muốn xóa " + table.getName() + "?")
+                    .setPositiveButton("Xóa", (dialog, id) -> {
+                        deleteTable(table.getId(), position);
+                    })
+                    .setNegativeButton("Hủy", null)
+                    .show();
         });
 
         view.setOnClickListener(v -> {
@@ -93,7 +103,7 @@ public class TableAdapter extends BaseAdapter {
             } else {
                 trangthai = " đang trống";
             }
-            Toast.makeText(context, "Bàn "+ table.getId() + trangthai, Toast.LENGTH_SHORT).show();
+            Toast.makeText(context,table.getName() + trangthai, Toast.LENGTH_SHORT).show();
 //            Intent intent = new Intent(context, FoodListActivity.class);
             /*intent.putExtra("table_id", table.getId());
             intent.putExtra("table_name", table.getName());
@@ -102,5 +112,42 @@ public class TableAdapter extends BaseAdapter {
         });
 
         return view;
+    }
+
+    private void deleteTable(int tableId, int position) {
+        new Thread(() -> {
+            try {
+                String token = context.getSharedPreferences("AppPrefs", Context.MODE_PRIVATE)
+                        .getString("auth_token", "");
+
+                URL url = new URL("http://172.16.1.2:8084/api/v1/tables/" + tableId);
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("DELETE");
+                conn.setRequestProperty("Authorization", "Bearer " + token);
+
+                int responseCode = conn.getResponseCode();
+                if (responseCode == HttpURLConnection.HTTP_NO_CONTENT) {
+                    ((TableActivity) context).runOnUiThread(() -> {
+                        tableList.remove(position);
+                        notifyDataSetChanged();
+                        Toast.makeText(context, "Xóa bàn thành công", Toast.LENGTH_SHORT).show();
+                    });
+                } else if (responseCode == HttpURLConnection.HTTP_UNAUTHORIZED) {
+                    ((TableActivity) context).runOnUiThread(() -> {
+                        Toast.makeText(context, "Thời gian đăng nhập hết hạn", Toast.LENGTH_SHORT).show();
+                        ((TableActivity) context).goToLogin();
+                    });
+                } else {
+                    ((TableActivity) context).runOnUiThread(() ->
+                            Toast.makeText(context, "Không thể xóa bàn đang có người ngồi" , Toast.LENGTH_SHORT).show()
+                    );
+                }
+                conn.disconnect();
+            } catch (Exception e) {
+                ((TableActivity) context).runOnUiThread(() ->
+                        Toast.makeText(context, "Lỗi: " + e.getMessage(), Toast.LENGTH_SHORT).show()
+                );
+            }
+        }).start();
     }
 }

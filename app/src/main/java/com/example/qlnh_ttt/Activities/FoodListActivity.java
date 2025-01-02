@@ -8,6 +8,7 @@ import android.widget.Button;
 import android.content.SharedPreferences;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -29,7 +30,7 @@ import java.util.List;
 
 public class FoodListActivity extends AppCompatActivity {
     private RecyclerView rvFoodList;
-    private FoodListAdapter adapter;
+    private FoodListAdapter foodListAdapter;
     private Button btnAddFood;
     private List<Food> foodList;
     private static final String TAG = "FoodListActivity";
@@ -39,7 +40,10 @@ public class FoodListActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_food_list);
 
-        initViews();
+        rvFoodList = findViewById(R.id.rvFoodList);
+        btnAddFood = findViewById(R.id.btnAddFood);
+        foodList = new ArrayList<Food>();
+
         setupRecyclerView();
         loadFoodList();
 
@@ -49,16 +53,23 @@ public class FoodListActivity extends AppCompatActivity {
         });
     }
 
-    private void initViews() {
-        rvFoodList = findViewById(R.id.rvFoodList);
-        btnAddFood = findViewById(R.id.btnAddFood);
-        foodList = new ArrayList<Food>();
-    }
 
     private void setupRecyclerView() {
-        adapter = new FoodListAdapter(this, foodList);
+
+        foodListAdapter = new FoodListAdapter(this, foodList, new FoodListAdapter.OnDeleteClickListener() {
+            @Override
+            public void onDeleteClick(Food food, int position) {
+                // Hiện dialog xác nhận xóa
+                new AlertDialog.Builder(FoodListActivity.this)
+                        .setTitle("Xác nhận xóa")
+                        .setMessage("Bạn có chắc chắn muốn xóa món ăn này?")
+                        .setPositiveButton("Xóa", (dialog, which) -> deleteFood(food, position))
+                        .setNegativeButton("Hủy", null)
+                        .show();
+            }
+        });
         rvFoodList.setLayoutManager(new LinearLayoutManager(this));
-        rvFoodList.setAdapter(adapter);
+        rvFoodList.setAdapter(foodListAdapter);
     }
 
     private void loadFoodList() {
@@ -105,7 +116,7 @@ public class FoodListActivity extends AppCompatActivity {
                     runOnUiThread(() -> {
                         foodList.clear();
                         foodList.addAll(newFoodList);
-                        adapter.notifyDataSetChanged();
+                        foodListAdapter.notifyDataSetChanged();
                     });
 
                 } else if (responseCode == HttpURLConnection.HTTP_UNAUTHORIZED) {
@@ -128,6 +139,44 @@ public class FoodListActivity extends AppCompatActivity {
             }
         }).start();
     }
+
+    private void deleteFood(Food food, int position) {
+        new Thread(() -> {
+            try {
+                SharedPreferences sharedPreferences = getSharedPreferences("AppPrefs", MODE_PRIVATE);
+                String token = sharedPreferences.getString("auth_token", "");
+
+                URL url = new URL("http://172.16.1.2:8083/api/v1/food/" + food.getFoodID());
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("DELETE");
+                conn.setRequestProperty("Authorization", "Bearer " + token);
+
+                int responseCode = conn.getResponseCode();
+                if (responseCode == HttpURLConnection.HTTP_OK || responseCode == HttpURLConnection.HTTP_NO_CONTENT) {
+                    runOnUiThread(() -> {
+                        foodListAdapter.removeItem(position);
+                        Toast.makeText(FoodListActivity.this,
+                                "Đã xóa món ăn thành công", Toast.LENGTH_SHORT).show();
+                    });
+                } else if (responseCode == HttpURLConnection.HTTP_UNAUTHORIZED) {
+                    runOnUiThread(() -> {
+                        Toast.makeText(this, "Phiên đăng nhập hết hạn", Toast.LENGTH_SHORT).show();
+                        Intent intent = new Intent(this, LoginActivity.class);
+                        startActivity(intent);
+                        finish();
+                    });
+                } else {
+                    throw new IOException("Server returned code: " + responseCode);
+                }
+            } catch (Exception e) {
+                runOnUiThread(() -> {
+                    Toast.makeText(FoodListActivity.this,
+                            "Lỗi khi xóa món ăn: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
+            }
+        }).start();
+    }
+
 
     @Override
     protected void onResume() {

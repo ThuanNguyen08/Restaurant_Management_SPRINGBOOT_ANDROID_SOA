@@ -20,9 +20,10 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.List;
 
 public class TableActivity extends AppCompatActivity {
-
+    private boolean isLoading = false;
     private GridView gvDisplayTable;
     private Button btnAddTable;
     private ArrayList<Table> tableList;
@@ -34,25 +35,28 @@ public class TableActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.viewtable_layout);
 
-        initializeViews();
-        setupListeners();
-        loadTables();
-    }
-
-    private void initializeViews() {
         gvDisplayTable = findViewById(R.id.gvDisplayTable);
         btnAddTable = findViewById(R.id.btnAddTable);
         tableList = new ArrayList<>();
+
+        btnAddTable.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(TableActivity.this, AddTableActivity.class);
+                startActivity(intent);
+            }
+        });
+
+        loadTables();
     }
 
-    private void setupListeners() {
-        btnAddTable.setOnClickListener(v -> {
-            Toast.makeText(TableActivity.this, "Chức năng thêm bàn đang được phát triển", Toast.LENGTH_SHORT).show();
-        });
-    }
+
 
     private void loadTables() {
+        if (isLoading) return;
+        isLoading = true;
         new Thread(() -> {
+
             try {
                 SharedPreferences sharedPreferences = getSharedPreferences("AppPrefs", MODE_PRIVATE);
                 String token = sharedPreferences.getString("auth_token", "");
@@ -74,6 +78,7 @@ public class TableActivity extends AppCompatActivity {
                 Log.d("TableActivity", "Response Code: " + responseCode);
 
                 if (responseCode == HttpURLConnection.HTTP_OK) {
+                    tableList.clear();
                     BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
                     StringBuilder response = new StringBuilder();
                     String line;
@@ -85,7 +90,7 @@ public class TableActivity extends AppCompatActivity {
                     Log.d("TableActivity", "API Response: " + response.toString());
 
                     JSONArray jsonArray = new JSONArray(response.toString());
-                    tableList.clear();
+
 
                     for (int i = 0; i < jsonArray.length(); i++) {
                         JSONObject jsonObject = jsonArray.getJSONObject(i);
@@ -102,9 +107,10 @@ public class TableActivity extends AppCompatActivity {
 
                     runOnUiThread(() -> {
                         if (!tableList.isEmpty()) {
-                            gvDisplayTable.setAdapter(null);
+//                            gvDisplayTable.setAdapter(null);
                             adapter = new TableAdapter(TableActivity.this, tableList);
                             gvDisplayTable.setAdapter(adapter);
+                            isLoading = false;
                         } else {
                             Toast.makeText(TableActivity.this, "Không có bàn nào", Toast.LENGTH_SHORT).show();
                         }
@@ -119,6 +125,7 @@ public class TableActivity extends AppCompatActivity {
                     runOnUiThread(() -> {
                         Toast.makeText(TableActivity.this, "Lỗi tải dữ liệu: " + responseCode, Toast.LENGTH_SHORT).show();
                     });
+                    isLoading = false;
                 }
 
                 connection.disconnect();
@@ -128,11 +135,13 @@ public class TableActivity extends AppCompatActivity {
                 runOnUiThread(() -> {
                     Toast.makeText(TableActivity.this, "Lỗi: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 });
+                isLoading = false;
             }
         }).start();
+
     }
 
-    private void goToLogin() {
+    public void goToLogin() {
         Intent intent = new Intent(TableActivity.this, LoginActivity.class);
         startActivity(intent);
         finish();
@@ -144,4 +153,5 @@ public class TableActivity extends AppCompatActivity {
         tableList.clear();
         loadTables(); // Reload tables when returning to this screen
     }
+
 }

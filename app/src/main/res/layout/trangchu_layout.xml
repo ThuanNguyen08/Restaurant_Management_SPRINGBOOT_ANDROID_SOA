@@ -62,38 +62,6 @@
                     android:layout_marginRight="5dp"
                     >
                     <RelativeLayout
-                        android:id="@+id/layout_displayhome_ThongKe"
-                        android:layout_width="65dp"
-                        android:layout_height="65dp"
-                        android:elevation="8dp"
-                        android:layout_margin="10dp"
-                        >
-
-                        <ImageView
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:layout_centerInParent="true"
-                            android:src="@drawable/revenue"
-                            />
-                    </RelativeLayout>
-
-                    <TextView
-                        android:layout_width="65dp"
-                        android:layout_height="33dp"
-                        android:layout_margin="10dp"
-                        android:gravity="center_horizontal"
-                        android:text="Thống kê doanh thu"
-                        android:textAlignment="center"
-                        android:textColor="@color/black"/>
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:layout_marginRight="5dp"
-                    >
-                    <RelativeLayout
                         android:id="@+id/layout_displayhome_XemBan"
                         android:layout_width="65dp"
                         android:layout_height="65dp"
@@ -225,23 +193,54 @@
                     android:textAllCaps="true"
                     android:textColor="@color/black"
                     android:textSize="20sp" />
-                <TextView
-                    android:id="@+id/txt_displayhome_ViewAllStatistic"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Xem tất cả >"
-                    android:layout_alignParentRight="true"
-                    android:layout_centerVertical="true"
-                    />
+
 
             </RelativeLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="16dp">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Doanh thu hôm nay"
+                        android:textStyle="bold"/>
+
+                    <TextView
+                        android:id="@+id/txt_total_revenue"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="20sp"
+                        android:textColor="@android:color/black"
+                        android:textStyle="bold"/>
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/txt_bill_count"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"/>
+            </LinearLayout>
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/rcv_displayhome_DonTrongNgay"
                 android:layout_width="match_parent"
-                android:layout_height="150dp"
+                android:layout_height="350dp"
+
+
                 android:clipToPadding="false"
                 />
+
+
 
         </LinearLayout>
 

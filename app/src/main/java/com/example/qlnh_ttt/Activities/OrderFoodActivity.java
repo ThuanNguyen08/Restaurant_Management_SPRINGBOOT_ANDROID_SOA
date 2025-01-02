@@ -24,6 +24,7 @@ import org.json.JSONObject;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
@@ -38,7 +39,7 @@ public class OrderFoodActivity extends AppCompatActivity {
     private Button btnConfirmOrder;
     private static final String TAG = "OrderFoodActivity";
     private int tableId;
-    private int billId;
+    private Integer billId = null;
     private Integer existingBillId = null;
 
     @Override
@@ -58,8 +59,7 @@ public class OrderFoodActivity extends AppCompatActivity {
         // Setup confirm button
         setupConfirmButton();
 
-        // Load dữ liệu lên hóa đơn
-        loadDataSequence();
+        checkExistingBill();
     }
 
     private void initViews() {
@@ -107,15 +107,95 @@ public class OrderFoodActivity extends AppCompatActivity {
         }
     }
 
-    //gọi phương kiểm tra nếu billid tồn tại thì load những món đã order lên trước.
-    private void loadDataSequence() {
+    // kiểm tra bill đã tồn tại chưa
+    private void checkExistingBill() {
         new Thread(() -> {
             try {
-                checkExistingBill();
-                runOnUiThread(this::loadFoodMenu);
+                SharedPreferences sharedPreferences = getSharedPreferences("AppPrefs", MODE_PRIVATE);
+                String token = sharedPreferences.getString("auth_token", "");
+
+                // Gọi API để kiểm tra bill hiện tại của bàn
+                URL url = new URL("http://172.16.1.2:8085/api/v1/bills/table/" + tableId);
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("GET");
+                conn.setRequestProperty("Authorization", "Bearer " + token);
+
+                int responseCode = conn.getResponseCode();
+                if (responseCode == HttpURLConnection.HTTP_OK) {
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+                    StringBuilder response = new StringBuilder();
+                    String line;
+
+                    while ((line = reader.readLine()) != null) {
+                        response.append(line);
+                    }
+
+                    JSONObject jsonResponse = new JSONObject(response.toString());
+                    if (!jsonResponse.isNull("billID")) {
+                        existingBillId = jsonResponse.getInt("billID");
+                        billId = existingBillId;
+
+                        // Load bill đã có
+                        loadExistingOrderItems();
+                    }
+                }
+
+                loadFoodMenu();
+
             } catch (Exception e) {
-                Log.e(TAG, "Error loading data: " + e.getMessage());
-                runOnUiThread(() -> Toast.makeText(this, "Lỗi tải dữ liệu", Toast.LENGTH_SHORT).show());
+                Log.e(TAG, "Error checking existing bill: " + e.getMessage());
+                runOnUiThread(() -> {
+                    Toast.makeText(this, "Lỗi kiểm tra hóa đơn hiện tại", Toast.LENGTH_SHORT).show();
+                    loadFoodMenu(); // Still load menu even if check fails
+                });
+            }
+        }).start();
+    }
+
+    private void loadExistingOrderItems() {
+        if (existingBillId == null) return;
+
+        new Thread(() -> {
+            try {
+                SharedPreferences sharedPreferences = getSharedPreferences("AppPrefs", MODE_PRIVATE);
+                    String token = sharedPreferences.getString("auth_token", "");
+
+                    URL url = new URL("http://172.16.1.2:8086/api/v1/billdetails/bill/" + existingBillId);
+                    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                    conn.setRequestMethod("GET");
+                    conn.setRequestProperty("Authorization", "Bearer " + token);
+
+                    int responseCode = conn.getResponseCode();
+                    if (responseCode == HttpURLConnection.HTTP_OK) {
+                        BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+                        StringBuilder response = new StringBuilder();
+                        String line;
+
+                        while ((line = reader.readLine()) != null) {
+                            response.append(line);
+                        }
+
+                        JSONArray jsonArray = new JSONArray(response.toString());
+                        List<BillDetail> existingItems = new ArrayList<>();
+
+                        for (int i = 0; i < jsonArray.length(); i++) {
+                            JSONObject jsonObject = jsonArray.getJSONObject(i);
+                            BillDetail item = new BillDetail();
+                            item.setBillID(jsonObject.getInt("billID"));
+                            item.setFoodID(jsonObject.getInt("foodID"));
+                            item.setQuantity(jsonObject.getInt("quantity"));
+                            item.setPrice(jsonObject.getInt("price"));
+                            existingItems.add(item);
+                        }
+
+                    runOnUiThread(() -> {
+                        orderItems.clear();
+                        orderItems.addAll(existingItems);
+                    });
+                }
+
+            } catch (Exception e) {
+                Log.e(TAG, "Error loading existing orders: " + e.getMessage());
             }
         }).start();
     }
@@ -201,7 +281,6 @@ public class OrderFoodActivity extends AppCompatActivity {
         foodOrderAdapter.notifyDataSetChanged();
     }
 
-
     private void setupConfirmButton() {
         btnConfirmOrder.setOnClickListener(v -> {
             if (orderItems.isEmpty()) {
@@ -213,7 +292,7 @@ public class OrderFoodActivity extends AppCompatActivity {
     }
 
     private void submitOrder() {
-        if (billId == 0) {
+        if (billId == null) {
             createNewBill();
         } else {
             submitOrderItems();
@@ -236,7 +315,6 @@ public class OrderFoodActivity extends AppCompatActivity {
                 // Create JSON payload for new bill
                 JSONObject billData = new JSONObject();
                 billData.put("tableID", tableId);
-                billData.put("status", "UNPAID");
 
                 // Write JSON data to connection
                 conn.getOutputStream().write(billData.toString().getBytes());
@@ -253,13 +331,12 @@ public class OrderFoodActivity extends AppCompatActivity {
 
                     JSONObject jsonResponse = new JSONObject(response.toString());
                     billId = jsonResponse.getInt("billID");
-                    existingBillId = billId;
+
 
                     for (BillDetail item : orderItems) {
                         item.setBillID(billId);
                     }
 
-                    runOnUiThread(this::submitOrderItems);
 
                 } else if (responseCode == HttpURLConnection.HTTP_UNAUTHORIZED) {
                     runOnUiThread(() -> {
@@ -282,43 +359,71 @@ public class OrderFoodActivity extends AppCompatActivity {
     }
 
 
-    // cập nhật món ăn cho bàn
     private void submitOrderItems() {
         new Thread(() -> {
             try {
                 SharedPreferences sharedPreferences = getSharedPreferences("AppPrefs", MODE_PRIVATE);
                 String token = sharedPreferences.getString("auth_token", "");
-
                 int successCount = 0;
 
                 for (BillDetail item : orderItems) {
-                    URL url = new URL("http://172.16.1.2:8086/api/v1/billdetails/" + item.getBillID() + "/" + item.getFoodID());
-                    HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                    conn.setRequestMethod("PUT");
-                    conn.setRequestProperty("Authorization", "Bearer " + token);
-                    conn.setRequestProperty("Content-Type", "application/json");
-                    conn.setDoOutput(true);
+                    // Lấy bill trước
+                    URL checkUrl = new URL("http://172.16.1.2:8086/api/v1/billdetails/bill/" + item.getBillID() + "/" + item.getFoodID());
+                    HttpURLConnection checkConn = (HttpURLConnection) checkUrl.openConnection();
+                    checkConn.setRequestMethod("GET");
+                    checkConn.setRequestProperty("Authorization", "Bearer " + token);
 
-                    // Gửi newQuantity trong body
-                    String newQuantity = String.valueOf(item.getQuantity());
-                    conn.getOutputStream().write(newQuantity.getBytes());
+                    int responseCode = checkConn.getResponseCode();
 
-                    int responseCode = conn.getResponseCode();
                     if (responseCode == HttpURLConnection.HTTP_OK) {
-                        successCount++;
-                    } else if (responseCode == HttpURLConnection.HTTP_UNAUTHORIZED) {
-                        runOnUiThread(() -> {
-                            Toast.makeText(OrderFoodActivity.this, "Phiên đăng nhập hết hạn", Toast.LENGTH_SHORT).show();
-                            Intent intent = new Intent(OrderFoodActivity.this, LoginActivity.class);
-                            startActivity(intent);
-                            finish();
-                        });
-                        return;
-                    } else {
-                        throw new IOException("Server trả về mã lỗi: " + responseCode + " cho món: " + item.getFoodID());
-                    }
+                        // món ăn đã gọi, nên update thêm
+                        URL updateUrl = new URL("http://172.16.1.2:8086/api/v1/billdetails/" + item.getBillID() + "/" + item.getFoodID());
+                        HttpURLConnection updateConn = (HttpURLConnection) updateUrl.openConnection();
+                        updateConn.setRequestMethod("PUT");
+                        updateConn.setRequestProperty("Authorization", "Bearer " + token);
+                        updateConn.setRequestProperty("Content-Type", "application/json");
+                        updateConn.setDoOutput(true);
 
-                    conn.disconnect();
+                        // Chỉ gửi số lượng mới
+//                        String newQuantity = String.valueOf(item.getQuantity());
+//                        updateConn.getOutputStream().write(newQuantity.getBytes());
+
+                        JSONObject updateData = new JSONObject();
+                        updateData.put("newQuantity", item.getQuantity());
+                        String jsonInputString = updateData.toString();
+
+                        try (OutputStream os = updateConn.getOutputStream()) {
+                            byte[] input = jsonInputString.getBytes("utf-8");
+                            os.write(input, 0, input.length);
+                        }
+
+                        if (updateConn.getResponseCode() == HttpURLConnection.HTTP_OK) {
+                            successCount++;
+                        }
+                        updateConn.disconnect();
+                    } else if(responseCode == HttpURLConnection.HTTP_NOT_FOUND) {
+                        // Món ăn chưa gọi, nên phải gọi mới
+                        URL createUrl = new URL("http://172.16.1.2:8086/api/v1/billdetails");
+                        HttpURLConnection createConn = (HttpURLConnection) createUrl.openConnection();
+                        createConn.setRequestMethod("POST");
+                        createConn.setRequestProperty("Authorization", "Bearer " + token);
+                        createConn.setRequestProperty("Content-Type", "application/json");
+                        createConn.setDoOutput(true);
+
+                        JSONObject billDetailData = new JSONObject();
+                        billDetailData.put("billID", item.getBillID());
+                        billDetailData.put("foodID", item.getFoodID());
+                        billDetailData.put("quantity", item.getQuantity());
+                        billDetailData.put("price", item.getPrice());
+
+                        createConn.getOutputStream().write(billDetailData.toString().getBytes());
+
+                        if (createConn.getResponseCode() == HttpURLConnection.HTTP_CREATED) {
+                            successCount++;
+                        }
+                        createConn.disconnect();
+                    }
+                    checkConn.disconnect();
                 }
 
                 final int finalSuccessCount = successCount;
@@ -334,7 +439,6 @@ public class OrderFoodActivity extends AppCompatActivity {
                 });
 
             } catch (Exception e) {
-                Log.e(TAG, "Lỗi khi cập nhật món: " + e.getMessage());
                 runOnUiThread(() -> {
                     Toast.makeText(OrderFoodActivity.this, "Lỗi khi cập nhật món", Toast.LENGTH_SHORT).show();
                 });
@@ -342,96 +446,6 @@ public class OrderFoodActivity extends AppCompatActivity {
         }).start();
     }
 
-    // kiểm tra bill đã tồn tại chưa
-    private void checkExistingBill() {
-        new Thread(() -> {
-            try {
-                SharedPreferences sharedPreferences = getSharedPreferences("AppPrefs", MODE_PRIVATE);
-                String token = sharedPreferences.getString("auth_token", "");
 
-                // Gọi API để kiểm tra bill hiện tại của bàn
-                URL url = new URL("http://172.16.1.2:8085/api/v1/bills/table/" + tableId);
-                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                conn.setRequestMethod("GET");
-                conn.setRequestProperty("Authorization", "Bearer " + token);
 
-                int responseCode = conn.getResponseCode();
-                if (responseCode == HttpURLConnection.HTTP_OK) {
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-                    StringBuilder response = new StringBuilder();
-                    String line;
-
-                    while ((line = reader.readLine()) != null) {
-                        response.append(line);
-                    }
-
-                    JSONObject jsonResponse = new JSONObject(response.toString());
-                    if (!jsonResponse.isNull("billID")) {
-                        existingBillId = jsonResponse.getInt("billID");
-                        billId = existingBillId;
-
-                        // Load existing order items
-                        loadExistingOrderItems();
-                    }
-                }
-
-                // Load food menu after checking bill
-                runOnUiThread(this::loadFoodMenu);
-
-            } catch (Exception e) {
-                Log.e(TAG, "Error checking existing bill: " + e.getMessage());
-                runOnUiThread(() -> {
-                    Toast.makeText(this, "Lỗi kiểm tra hóa đơn hiện tại", Toast.LENGTH_SHORT).show();
-                    loadFoodMenu(); // Still load menu even if check fails
-                });
-            }
-        }).start();
-    }
-
-    private void loadExistingOrderItems() {
-        if (existingBillId == null) return;
-
-        new Thread(() -> {
-            try {
-                SharedPreferences sharedPreferences = getSharedPreferences("AppPrefs", MODE_PRIVATE);
-                String token = sharedPreferences.getString("auth_token", "");
-
-                URL url = new URL("http://172.16.1.2:8086/api/v1/billdetails/bill/" + existingBillId);
-                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                conn.setRequestMethod("GET");
-                conn.setRequestProperty("Authorization", "Bearer " + token);
-
-                int responseCode = conn.getResponseCode();
-                if (responseCode == HttpURLConnection.HTTP_OK) {
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-                    StringBuilder response = new StringBuilder();
-                    String line;
-
-                    while ((line = reader.readLine()) != null) {
-                        response.append(line);
-                    }
-
-                    JSONArray jsonArray = new JSONArray(response.toString());
-                    List<BillDetail> existingItems = new ArrayList<>();
-
-                    for (int i = 0; i < jsonArray.length(); i++) {
-                        JSONObject jsonObject = jsonArray.getJSONObject(i);
-                        BillDetail item = new BillDetail();
-                        item.setBillID(jsonObject.getInt("billID"));
-                        item.setFoodID(jsonObject.getInt("foodID"));
-                        item.setQuantity(jsonObject.getInt("quantity"));
-                        item.setPrice(jsonObject.getInt("price"));
-                        existingItems.add(item);
-                    }
-
-                    runOnUiThread(() -> {
-                        orderItems.clear();
-                        orderItems.addAll(existingItems);
-                    });
-                }
-            } catch (Exception e) {
-                Log.e(TAG, "Error loading existing orders: " + e.getMessage());
-            }
-        }).start();
-    }
 }

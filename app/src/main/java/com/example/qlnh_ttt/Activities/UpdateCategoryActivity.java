@@ -12,6 +12,8 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.qlnh_ttt.R;
 
+import org.json.JSONObject;
+
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -58,14 +60,18 @@ public class UpdateCategoryActivity extends AppCompatActivity {
                 SharedPreferences sharedPreferences = getSharedPreferences("AppPrefs", MODE_PRIVATE);
                 String token = sharedPreferences.getString("auth_token", "");
 
-                URL url = new URL("http://172.16.1.2:8082/api/v1/dmFood/" + categoryId);
+                URL url = new URL("http://172.16.1.2:8082/api/v1/dmFood/add");
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                conn.setRequestMethod("PUT");
+                conn.setRequestMethod("POST");
                 conn.setRequestProperty("Authorization", "Bearer " + token);
                 conn.setRequestProperty("Content-Type", "application/json");
                 conn.setDoOutput(true);
 
                 String jsonBody = "{\"categoryName\":\"" + newCategoryName + "\"}";
+
+//                JSONObject newCategory = new JSONObject();
+//                newCategory.put("categoryName", newCategoryName);
+
 
                 OutputStreamWriter writer = new OutputStreamWriter(conn.getOutputStream());
                 writer.write(jsonBody);

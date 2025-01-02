@@ -11,6 +11,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.qlnh_ttt.Activities.FoodListActivity;
 import com.example.qlnh_ttt.Activities.ItemCategoryActivity;
 import com.example.qlnh_ttt.Activities.UpdateCategoryActivity;
 import com.example.qlnh_ttt.Entities.DmFood;
@@ -23,6 +24,12 @@ public class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.Catego
     private Context context;
     private ArrayList<DmFood> categoryList;
     private OnDeleteClickListener deleteClickListener;
+
+    public CategoryAdapter(Context context, ArrayList<DmFood> categoryList, OnDeleteClickListener listener) {
+        this.context = context;
+        this.categoryList = categoryList;
+        this.deleteClickListener = listener;
+    }
 
     //ánh xạ mỗi item trong recyclerView
     public static class CategoryViewHolder extends RecyclerView.ViewHolder {
@@ -37,12 +44,6 @@ public class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.Catego
         }
     }
 
-    public CategoryAdapter(Context context, ArrayList<DmFood> categoryList, OnDeleteClickListener listener) {
-        this.context = context;
-        this.categoryList = categoryList;
-        this.deleteClickListener = listener;
-    }
-
     //tao mot item(view con) lay tu layout_category_item
     @NonNull
     @Override
@@ -51,7 +52,7 @@ public class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.Catego
         return new CategoryViewHolder(view);
     }
 
-    //gán dữ liệu từ 1 mục vào trongg danh sách txtCategoryName
+    //gán dữ liệu từ 1 mục vào trongg danh sách
     @Override
     public void onBindViewHolder(@NonNull CategoryViewHolder holder, int position) {
         DmFood category = categoryList.get(position);
@@ -63,6 +64,7 @@ public class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.Catego
             intent.putExtra("category_name", category.getCategoryName());
             intent.putExtra("category_id", category.getDmFoodId());
             context.startActivity(intent);
+
         });
 
         //Xử lý sự kiện click nút update
@@ -99,6 +101,7 @@ public class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.Catego
     public void removeItem(int position) {
         categoryList.remove(position);
         notifyItemRemoved(position);
+        notifyItemRangeChanged(position, categoryList.size()); // Cập nhật lại các vị trí
     }
 
 }
