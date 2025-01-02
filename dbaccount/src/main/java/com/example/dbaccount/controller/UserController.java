@@ -25,43 +25,60 @@ public class UserController {
 	@Autowired
 	private LoginService loginService;
 
-	 @GetMapping("/get-accountID")
-	    public ResponseEntity<?> getUserName(@RequestHeader("Authorization") String authorizationHeader) {
-	        try {
-	            String token = authorizationHeader.replace("Bearer ", "");
-	            String userName = util.getUserNameFromToken(token);
-	            int accountId = loginService.getId(userName);
-	            return ResponseEntity.ok(accountId);
-	        } catch (Exception e) {
-	            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token không hợp lệ");
-	        }
-	    }
+	@GetMapping("/get-accountID")
+	public ResponseEntity<?> getUserName(@RequestHeader("Authorization") String authorizationHeader) {
+		try {
+			String token = authorizationHeader.replace("Bearer ", "");
+			String userName = util.getUserNameFromToken(token);
+			int accountId = loginService.getId(userName);
+			return ResponseEntity.ok(accountId);
+		} catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token không hợp lệ");
+		}
+	}
 
-	
+	@GetMapping("/auth/get-accountType")
+	public ResponseEntity<?> getAccountType(@RequestHeader("Authorization") String authorizationHeader) {
+		try {
+			String token = authorizationHeader.replace("Bearer ", "");
+			String userName = util.getUserNameFromToken(token);
+
+			// Lấy accountType từ username qua service
+			String accountType = loginService.getAccountType(userName);
+
+			return ResponseEntity.ok(accountType);
+
+		} catch (Exception e) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token không hợp lệ");
+		}
+	}
+
 	@PostMapping("/login")
-	// ResponseEntity dùng để đại diện cho toàn bộ phản hồi HTTP (HTTP response) trong một API. Nó giúp kiểm soát các phần của phản hồi HTTP, bao gồm:
-	// Status Code (Mã trạng thái HTTP): chỉ định mã trạng thái HTTP cho phản hồi (ví dụ: 200 OK, 404 Not Found, 500 Internal Server Error).
-	// Headers (Tiêu đề HTTP): tùy chỉnh các header của phản hồi (ví dụ: Content-Type, Authorization, Location, v.v.).
-	// Body (Nội dung phản hồi): xác định nội dung của phản hồi (chẳng hạn như dữ liệu JSON, văn bản, hình ảnh, v.v.).
-	public ResponseEntity<String> login(@RequestBody UserRequest user ) {
+	// ResponseEntity dùng để đại diện cho toàn bộ phản hồi HTTP (HTTP response)
+	// trong một API. Nó giúp kiểm soát các phần của phản hồi HTTP, bao gồm:
+	// Status Code (Mã trạng thái HTTP): chỉ định mã trạng thái HTTP cho phản hồi
+	// (ví dụ: 200 OK, 404 Not Found, 500 Internal Server Error).
+	// Headers (Tiêu đề HTTP): tùy chỉnh các header của phản hồi (ví dụ:
+	// Content-Type, Authorization, Location, v.v.).
+	// Body (Nội dung phản hồi): xác định nội dung của phản hồi (chẳng hạn như dữ
+	// liệu JSON, văn bản, hình ảnh, v.v.).
+	public ResponseEntity<String> login(@RequestBody UserRequest user) {
 		String token = loginService.login(user.getUsername(), user.getPassword());
 
-		if(token == null) {
-	        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Sai username hoặc password.");
+		if (token == null) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Sai username hoặc password.");
 		}
-		
+
 		return ResponseEntity.ok(token);
 	}
 
 	@GetMapping("/auth")
-    public boolean auth() {
-        return true;
-    }
-	
-	
+	public boolean auth() {
+		return true;
+	}
 
 	@PostMapping("/register")
-	private String register(@RequestBody UserRequest user ) {
+	private String register(@RequestBody UserRequest user) {
 
 		boolean status = RegisterService.registerUser(user.getUsername(), user.getPassword(), user.getAccountType());
 
@@ -71,5 +88,5 @@ public class UserController {
 			return "Tài khoản đã tồn tại";
 		}
 	}
-	
+
 }

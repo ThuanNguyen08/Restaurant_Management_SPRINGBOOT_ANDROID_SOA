@@ -33,6 +33,11 @@ public class LoginService {
 			return "Invalid credentials"; // Nếu thông tin đăng nhập sai
 		}
 	}
+	public String getAccountType(String userName) {
+        User account = repo.findByUserName(userName)
+            .orElseThrow(() -> new RuntimeException("Không tìm thấy tài khoản"));
+        return account.getAccountType();
+    }
 	
 	public int getId(String userName) {
 		Optional<User> user = repo.findByUserName(userName);
