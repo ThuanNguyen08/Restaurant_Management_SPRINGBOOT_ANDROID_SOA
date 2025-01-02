@@ -5,6 +5,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,6 +17,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.qlnh_ttt.AccoutType.AccoutType;
 import com.example.qlnh_ttt.Activities.UpdateFoodActivity;
 import com.example.qlnh_ttt.Entities.DmFood;
 import com.example.qlnh_ttt.Entities.Food;
@@ -47,6 +50,22 @@ public class FoodListAdapter extends RecyclerView.Adapter<FoodListAdapter.FoodVi
             txtFoodCategory = itemView.findViewById(R.id.txtFoodCategory);
             btnUpdateFood = itemView.findViewById(R.id.btnUpdateFood);
             btnDeleteFood = itemView.findViewById(R.id.btnDeleteFood);
+            // Check role trong thread riêng
+            Handler handler = new Handler(Looper.getMainLooper());
+            new Thread(() -> {
+                boolean isUser = AccoutType.isUser(context);
+                handler.post(() -> {
+                    if(isUser) {
+                        btnDeleteFood.setVisibility(View.GONE);
+                        btnUpdateFood.setVisibility(View.GONE);
+                    } else {
+                        btnDeleteFood.setVisibility(View.VISIBLE);
+                        btnUpdateFood.setVisibility(View.VISIBLE);
+                    }
+                });
+            }).start();
+
+
         }
     }
 

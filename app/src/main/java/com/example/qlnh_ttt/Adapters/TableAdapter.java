@@ -1,7 +1,10 @@
 package com.example.qlnh_ttt.Adapters;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,6 +13,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.qlnh_ttt.AccoutType.AccoutType;
 import com.example.qlnh_ttt.Activities.FoodListActivity;
 import com.example.qlnh_ttt.Activities.OrderFoodActivity;
 import com.example.qlnh_ttt.Activities.PaymentActivity;
@@ -24,7 +28,7 @@ import java.util.ArrayList;
 public class TableAdapter extends BaseAdapter {
     private Context context;
     private ArrayList<Table> tableList;
-
+    private Activity activity;
     public TableAdapter(Context context, ArrayList<Table> tableList) {
         this.context = context;
         this.tableList = tableList;
@@ -61,7 +65,21 @@ public class TableAdapter extends BaseAdapter {
         ImageView imgPay = view.findViewById(R.id.img_ThanhToan);
         ImageView imgDelete = view.findViewById(R.id.img_XoaBan);
 
+        // Check role trong thread riêng
+        Handler handler = new Handler(Looper.getMainLooper());
+        new Thread(() -> {
+            boolean isUser = AccoutType.isUser(context);
+            handler.post(() -> {
+                if(isUser) {
+                    imgDelete.setVisibility(View.GONE);
+                } else {
+                    imgDelete.setVisibility(View.VISIBLE);
+                }
+            });
+        }).start();
         txtTableName.setText(table.getName());
+
+
 
         // set ảnh của bàn với trạng thái status
         if(table.getStatus().equalsIgnoreCase("OCCUPIED")) {
@@ -150,4 +168,8 @@ public class TableAdapter extends BaseAdapter {
             }
         }).start();
     }
+
+
+
+
 }

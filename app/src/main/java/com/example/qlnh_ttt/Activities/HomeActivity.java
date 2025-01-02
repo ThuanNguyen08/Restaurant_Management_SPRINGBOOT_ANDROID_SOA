@@ -31,6 +31,7 @@ import java.text.NumberFormat;
 import java.util.Locale;
 import java.time.LocalDate;
 
+import com.example.qlnh_ttt.AccoutType.AccoutType;
 import com.example.qlnh_ttt.Adapters.BillAdapter;
 import com.example.qlnh_ttt.Entities.Bill;
 import com.example.qlnh_ttt.R;
@@ -44,7 +45,7 @@ public class HomeActivity extends AppCompatActivity {
     private ImageView btnLogout;
     private RecyclerView rcvDonTrongNgay;
 
-    private TextView txtTotalRevenue, txtBillCount;
+    private TextView txtTotalRevenue, txtBillCount, txtAllDoanhThu;
     private BillAdapter billAdapter;
     private List<Bill> todayBills = new ArrayList<>();
 
@@ -63,7 +64,8 @@ public class HomeActivity extends AppCompatActivity {
 
         txtTotalRevenue = findViewById(R.id.txt_total_revenue);
         txtBillCount = findViewById(R.id.txt_bill_count);
-
+        txtAllDoanhThu = findViewById(R.id.txt_allDoanhThu);
+        CheckAccount();
 
         //sự kiện click cho nút logout
         btnLogout.setOnClickListener(new View.OnClickListener() {
@@ -100,6 +102,15 @@ public class HomeActivity extends AppCompatActivity {
                 startActivity(intent);
             }
         });
+
+        txtAllDoanhThu.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(HomeActivity.this, RevenueActivity.class );
+                startActivity(intent);
+            }
+        });
+
 
 
 
@@ -231,4 +242,20 @@ public class HomeActivity extends AppCompatActivity {
         super.onResume();
         loadTodayBills();
     }
+
+    public void CheckAccount(){
+        new Thread(() -> {
+            boolean isUser = AccoutType.isUser(HomeActivity.this);
+
+            runOnUiThread(() -> {
+                if(isUser){
+                    txtAllDoanhThu.setVisibility(View.GONE);
+                } else {
+                    txtAllDoanhThu.setVisibility(View.VISIBLE);
+                }
+            });
+        }).start();
+    }
+
+
 }
