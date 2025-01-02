@@ -30,6 +30,7 @@
         <activity android:name=".Activities.PaymentActivity"/>
         <activity android:name=".Activities.AddTableActivity"/>
         <activity android:name=".Activities.UpdateFoodActivity"/>
+        <activity android:name=".Activities.RevenueActivity"/>
 
         <activity
             android:name=".Activities.WelcomeActivity"

@@ -29,7 +29,6 @@ public class OrderFoodAdapter extends RecyclerView.Adapter<OrderFoodAdapter.View
         foodQuantities.put(food.getFoodID(), quantity);
     }
 
-
     public OrderFoodAdapter(Context context, ArrayList<Food> foodList, OnQuantityChangeListener listener) {
         this.context = context;
         this.foodList = foodList;

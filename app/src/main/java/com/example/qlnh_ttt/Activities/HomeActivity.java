@@ -44,7 +44,7 @@ public class HomeActivity extends AppCompatActivity {
     private ImageView btnLogout;
     private RecyclerView rcvDonTrongNgay;
 
-    private TextView txtTotalRevenue, txtBillCount;
+    private TextView txtTotalRevenue, txtBillCount, txtAllDoanhThu;
     private BillAdapter billAdapter;
     private List<Bill> todayBills = new ArrayList<>();
 
@@ -63,6 +63,7 @@ public class HomeActivity extends AppCompatActivity {
 
         txtTotalRevenue = findViewById(R.id.txt_total_revenue);
         txtBillCount = findViewById(R.id.txt_bill_count);
+        txtAllDoanhThu = findViewById(R.id.txt_allDoanhThu);
 
 
         //sự kiện click cho nút logout
@@ -97,6 +98,14 @@ public class HomeActivity extends AppCompatActivity {
             public void onClick(View view) {
                 // Chuyển sang màn hình danh muc
                 Intent intent = new Intent(HomeActivity.this, CategoryActivity.class);
+                startActivity(intent);
+            }
+        });
+
+        txtAllDoanhThu.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(HomeActivity.this, RevenueActivity.class );
                 startActivity(intent);
             }
         });

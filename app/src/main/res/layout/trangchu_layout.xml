@@ -189,10 +189,19 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_centerVertical="true"
-                    android:text="Thanh Toán Hôm Nay"
+                    android:text="LỊCH SỬ DOANH THU"
                     android:textAllCaps="true"
                     android:textColor="@color/black"
                     android:textSize="20sp" />
+
+                <TextView
+                    android:id="@+id/txt_allDoanhThu"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Xem tất cả >"
+                    android:layout_alignParentRight="true"
+                    android:layout_centerVertical="true"
+                    />
 
 
             </RelativeLayout>
