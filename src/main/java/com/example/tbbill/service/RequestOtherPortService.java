@@ -67,4 +67,12 @@ public class RequestOtherPortService {
         String url = BILL_DETAIL_SERVICE_URL + "/bill/" + billId;
         restTemplate.exchange(url, HttpMethod.DELETE, entity, Void.class);
     }
+    
+    public int getId(String token) {
+		String url = "http://localhost:8080/api/v1/get-accountID";
+		HttpHeaders headers = new HttpHeaders();
+		headers.set("Authorization", token); 
+		HttpEntity<String> entity = new HttpEntity<>(headers);
+		return restTemplate.exchange(url, HttpMethod.GET, entity, Integer.class).getBody();
+	}
 }

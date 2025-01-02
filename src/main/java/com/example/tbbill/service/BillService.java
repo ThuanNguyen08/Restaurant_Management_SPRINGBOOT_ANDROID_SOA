@@ -27,6 +27,7 @@ public class BillService {
 		});
 
 		bill.setBillDate(LocalDateTime.now());
+		bill.setUserInfoID(requestOtherPortService.getId(token));
 		bill.setStatus("PENDING");
 		bill.setTotalAmount(0); // Khởi tạo tổng tiền = 0
 		requestOtherPortService.updateTableStatus(bill.getTableID(), "OCCUPIED", token);
