@@ -1,10 +1,19 @@
 package com.example.tbbilldetail.controller;
 
-import java.util.List;
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.example.tbbilldetail.entities.BillDetail;
@@ -44,6 +53,7 @@ public class BillDetailController {
     public ResponseEntity<?> addBillDetail(
             @RequestBody BillDetail billDetail,
             @RequestHeader("Authorization") String token) {
+    	
         try {
             Authentication(token);
             return new ResponseEntity<>(
@@ -60,10 +70,11 @@ public class BillDetailController {
     public ResponseEntity<?> updateBillDetail(
             @PathVariable Integer billId,
             @PathVariable Integer foodId,
-            @RequestBody Integer newQuantity,
+            @RequestBody Map<String, Integer> requestBody, 
             @RequestHeader("Authorization") String token) {
         try {
             Authentication(token);
+            Integer newQuantity = requestBody.get("newQuantity");
             return ResponseEntity.ok(
                 billDetailService.updateBillDetail(billId, foodId, newQuantity)
             );
@@ -100,7 +111,7 @@ public class BillDetailController {
         }
     }
 
-    // Xóa tất cả món theo billId
+    // Xóa tất cả món theo billId 
     @DeleteMapping("/bill/{billId}")
     public ResponseEntity<?> deleteAllByBillId(
             @PathVariable Integer billId,
@@ -109,6 +120,24 @@ public class BillDetailController {
             Authentication(token);
             billDetailService.deleteAllByBillId(billId);
             return ResponseEntity.noContent().build();
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+    
+    @GetMapping("/bill/{billId}/{foodId}")
+    public ResponseEntity<?> CheckFood(@PathVariable Integer billId,
+    		@PathVariable Integer foodId,
+            @RequestHeader("Authorization") String token){
+    	try {
+            Authentication(token);
+            boolean exists = billDetailService.checkFoodInDetailBill(billId, foodId);
+            
+            if (exists) {
+                return ResponseEntity.ok().body("Món ăn đã tồn tại");
+            } else {
+                return ResponseEntity.status(404).body("Món ăn chưa tồn tại ");
+            }
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }

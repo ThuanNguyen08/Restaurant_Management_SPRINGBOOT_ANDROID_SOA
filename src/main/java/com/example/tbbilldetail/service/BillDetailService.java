@@ -105,4 +105,9 @@ public class BillDetailService {
     public void deleteAllByBillId(Integer billId) {
         billDetailRepository.deleteByBillID(billId);
     }
+  
+    //Tìm kiếm billid và fooodid
+    public boolean checkFoodInDetailBill(Integer billId, Integer foodId) {
+    	return billDetailRepository.existsByBillIDAndFoodID(billId, foodId);
+    }
 }

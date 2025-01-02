@@ -13,4 +13,6 @@ public interface BillDetailRepository extends JpaRepository<BillDetail, Integer>
     List<BillDetail> findByBillID(Integer billID);
     Optional<BillDetail> findByBillIDAndFoodID(Integer billID, Integer foodID);
     void deleteByBillID(Integer billID);
+    
+    boolean existsByBillIDAndFoodID(Integer billID, Integer foodId);
 }
