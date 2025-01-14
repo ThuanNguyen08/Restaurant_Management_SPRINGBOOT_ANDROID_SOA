@@ -87,11 +87,8 @@ Base URL: `http://localhost:8080/api/v1`
 **Success Response**:
 - Status: 200 OK
 ```json
-{
-    "accountId": 123
-}
+số nguyên (giá trị của "accountId")
 ```
-
 **Error Response**:
 - Status: 401 UNAUTHORIZED
 ```json
@@ -112,7 +109,7 @@ Base URL: `http://localhost:8080/api/v1`
 - Status: 200 OK
 ```json
 {
-    "accountType": "ADMIN"
+    "accountType": "admin"
 }
 ```
 
