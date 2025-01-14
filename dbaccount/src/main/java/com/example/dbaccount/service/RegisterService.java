@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import com.example.dbaccount.entities.User;
 import com.example.dbaccount.repository.UserRepository;
+import com.example.dbaccount.request.UserRequest;
 
 @Service
 public class RegisterService {
@@ -42,5 +43,12 @@ public class RegisterService {
 			return false;
 		}
 		return false;
+	}
+	public int accountId_Register(String username) {
+		Optional<User> getUser = repo.findByUserName(username);
+		
+		return getUser.get().getAccountId();
+		
+		
 	}
 }

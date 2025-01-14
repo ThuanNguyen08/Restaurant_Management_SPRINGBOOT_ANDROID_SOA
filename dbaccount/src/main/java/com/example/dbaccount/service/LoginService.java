@@ -30,7 +30,8 @@ public class LoginService {
 			String token = JwtUtil.generateToken(user.get().getUserName());
 			return token; // Trả về token JWT
 		} else {
-			return "Invalid credentials"; // Nếu thông tin đăng nhập sai
+			String mess = "Sai username hoặc password.";
+			return mess; // Nếu thông tin đăng nhập sai
 		}
 	}
 	public String getAccountType(String userName) {
