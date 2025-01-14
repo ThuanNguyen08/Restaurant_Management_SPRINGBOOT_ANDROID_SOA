@@ -5,7 +5,9 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -67,7 +69,22 @@ public class InfoUserController {
 		}
 
 	}
+	//Hàm tạo nội bộ ban đầu
+	@PostMapping("/initial-info/{accountId}")
+	public ResponseEntity<?> addInitialInfo(@RequestBody InfoUserRequest userRequest ,@PathVariable Integer accountId ) {
+		try {
+			boolean addInfo = service.addInfo(userRequest, accountId);
+			if (addInfo) {
+				return ResponseEntity.status(HttpStatus.OK).body("Thêm thành công");
+			} else {
+				return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Có lỗi xảy ra khi thêm");
+			}
 
+		} catch (Exception e) {
+
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Server có lỗi ");
+		}
+	}
 	@PostMapping("/add")
 	public ResponseEntity<?> addInfo(@RequestBody InfoUserRequest userRequest,
 			@RequestHeader("Authorization") String token) {
@@ -87,5 +104,37 @@ public class InfoUserController {
 		}
 
 	}
+	@DeleteMapping("/{userInfoId}")
+    public ResponseEntity<?> deleteInfoByUserInfoID(@PathVariable int userInfoId, 
+                                      @RequestHeader("Authorization") String token) {
+        try {
+            Authentication(token);
+            
+            boolean deleted = service.deleteInfo(userInfoId);
+            if (deleted) {
+                return ResponseEntity.ok("Xóa tài khoản thành công");
+            } else {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Không tìm thấy tài khoản để xóa");
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Lỗi khi xóa tài khoản: " + e.getMessage());
+        }
+    }
+	
+	@DeleteMapping("/ByAcountId/{accountId}")
+    public ResponseEntity<?> deleteInfoByAccountId(@PathVariable int accountId, 
+                                      @RequestHeader("Authorization") String token) {
+        try {
+        	 Authentication(token);
+            boolean deleted = service.deleteByAccountId(accountId);
+            if (deleted) {
+                return ResponseEntity.ok("Xóa tài khoản thành công");
+            } else {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Không tìm thấy tài khoản để xóa");
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Lỗi khi xóa tài khoản: " + e.getMessage());
+        }
+    }
 
 }

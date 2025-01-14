@@ -53,4 +53,27 @@ import com.example.tbuserinfo.request.InfoUserRequest;
 		Optional<InfoUser> userById = repo.findByAccountId(accountId);
 		return userById.get().getUserInfoId();
 	}
+	public boolean deleteInfo(int userInfoId) {
+        try {
+            Optional<InfoUser> userToDelete = repo.findById(userInfoId);
+            if (userToDelete.isPresent()) {
+                repo.deleteById(userInfoId);
+                return true;
+            }
+            return false;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+	public boolean deleteByAccountId(int accountId) {
+		Optional<InfoUser> userOptional = repo.findByAccountId(accountId);
+		InfoUser user = userOptional.get();
+		if(userOptional.isPresent()) {
+			repo.delete(user);
+			return true;
+		}
+		return false;	
+	}
 }
+

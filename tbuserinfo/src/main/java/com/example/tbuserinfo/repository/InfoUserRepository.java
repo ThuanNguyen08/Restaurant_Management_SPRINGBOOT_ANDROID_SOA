@@ -11,5 +11,5 @@ import com.example.tbuserinfo.entities.InfoUser;
 @Repository
 public interface InfoUserRepository extends JpaRepository<InfoUser, Integer> {
 	Optional<InfoUser> findByAccountId(int accountId);
-
+	
 }

@@ -2,6 +2,7 @@ package com.example.tbuserinfo.request;
 
 public class InfoUserRequest {
 
+	private int accountId;
 	private String fullName;
 
 	private String sex ;
@@ -10,7 +11,16 @@ public class InfoUserRequest {
 	
 	private String phoneNumber;
 	
+	
 	public InfoUserRequest() {}
+
+	public int getAccountId() {
+		return accountId;
+	}
+
+	public void setAccountId(int accountId) {
+		this.accountId = accountId;
+	}
 
 	public String getFullName() {
 		return fullName;
