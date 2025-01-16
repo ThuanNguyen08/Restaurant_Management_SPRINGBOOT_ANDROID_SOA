@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -104,6 +105,42 @@ public class InfoUserController {
 		}
 
 	}
+	
+	@PutMapping("/update/{userInfoId}")
+	public ResponseEntity<?> updateInfo(@PathVariable int userInfoId,
+	                                  @RequestBody InfoUserRequest userRequest,
+	                                  @RequestHeader("Authorization") String token) {
+	    try {
+	        Authentication(token);
+//	        int accountId = RequestOtherPortService.getId(token);
+	        
+	        // Lấy thông tin user hiện tại
+//	        InfoUser existingUser = service.getById(accountId);
+//	        if (existingUser == null) {
+//	            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+//	                               .body("Không tìm thấy thông tin người dùng");
+//	        }
+
+	        // Kiểm tra quyền: chỉ cho phép update thông tin của chính mình
+	        // hoặc kiểm tra xem có phải admin không
+//	        if (existingUser.getAccountId() != accountId) {
+//	            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+//	                               .body("Không có quyền cập nhật thông tin này");
+//	        }
+
+	        boolean updated = service.updateInfo(userInfoId, userRequest);
+	        if (updated) {
+	            return ResponseEntity.ok("Cập nhật thành công");
+	        } else {
+	            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+	                               .body("Có lỗi xảy ra khi cập nhật");
+	        }
+	    } catch (Exception e) {
+	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+	                           .body("Lỗi server khi cập nhật: " + e.getMessage());
+	    }
+	}
+	
 	@DeleteMapping("/{userInfoId}")
     public ResponseEntity<?> deleteInfoByUserInfoID(@PathVariable int userInfoId, 
                                       @RequestHeader("Authorization") String token) {

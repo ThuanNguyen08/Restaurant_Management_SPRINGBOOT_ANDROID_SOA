@@ -53,6 +53,31 @@ import com.example.tbuserinfo.request.InfoUserRequest;
 		Optional<InfoUser> userById = repo.findByAccountId(accountId);
 		return userById.get().getUserInfoId();
 	}
+	
+	public boolean updateInfo(int userInfoId, InfoUserRequest userRequest) {
+	    try {
+	        Optional<InfoUser> existingUserOpt = repo.findById(userInfoId);
+	        if (!existingUserOpt.isPresent()) {
+	            return false;
+	        }
+
+	        InfoUser existingUser = existingUserOpt.get();
+	        
+	        // Cập nhật tất cả các trường từ request
+	        existingUser.setFullName(userRequest.getFullName());
+	        existingUser.setEmail(userRequest.getEmail());
+	        existingUser.setPhoneNumber(userRequest.getPhoneNumber());
+	        existingUser.setSex(userRequest.getSex());
+
+	        repo.save(existingUser);
+	        return true;
+
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	        return false;
+	    }
+	}
+	
 	public boolean deleteInfo(int userInfoId) {
         try {
             Optional<InfoUser> userToDelete = repo.findById(userInfoId);

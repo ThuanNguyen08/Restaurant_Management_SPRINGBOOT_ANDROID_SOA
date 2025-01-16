@@ -9,5 +9,4 @@ public class TbuserinfoApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(TbuserinfoApplication.class, args);
 	}
-
 }
