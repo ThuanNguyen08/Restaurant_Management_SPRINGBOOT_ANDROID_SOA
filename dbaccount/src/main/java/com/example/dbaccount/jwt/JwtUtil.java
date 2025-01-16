@@ -36,7 +36,7 @@ public class JwtUtil {
 		// Tạo phần claims (dữ liệu) của JWT, bao gồm các thông tin như:    
 		JWTClaimsSet jwtClaimSet = new JWTClaimsSet.Builder()
 										.subject(UserName) // - subject: username của người dùng
-										.issuer("phatne") // - issuer: người phát hành token
+										.issuer("nhom13") // - issuer: người phát hành token
 										.issueTime(new Date()) // - issueTime: thời gian phát hành token
 										.expirationTime(new Date(Instant.now().plus(1, ChronoUnit.HOURS).toEpochMilli())) // - expirationTime: thời gian hết hạn token (1 giờ kể từ lúc phát hành)
 										.claim("customeClaim", "Custom") // - claim tùy chỉnh "customeClaim": có thể chứa các thông tin bổ sung

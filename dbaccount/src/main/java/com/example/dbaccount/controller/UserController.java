@@ -34,16 +34,16 @@ public class UserController {
 	private UserService userService;
 	@Autowired
 	private RequestOtherPortService requestOtherPortService;
-	@GetMapping("/get-accountID")
+	
 	public void Authentication(String token) {
 		if (!requestOtherPortService.auth(token)) {
 			throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authentication failed");
 		}
 	}
+	@GetMapping("/get-accountID")
 	public ResponseEntity<?> getUserName(@RequestHeader("Authorization") String authorizationHeader) {
 		try {
 			String token = authorizationHeader.replace("Bearer ", "");
-			Authentication(token);
 			String userName = util.getUserNameFromToken(token);
 			int accountId = loginService.getId(userName);
 			return ResponseEntity.ok(accountId);
