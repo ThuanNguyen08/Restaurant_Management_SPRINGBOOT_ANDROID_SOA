@@ -14,7 +14,6 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.qlnh_ttt.AccoutType.AccoutType;
-import com.example.qlnh_ttt.Activities.FoodListActivity;
 import com.example.qlnh_ttt.Activities.ItemCategoryActivity;
 import com.example.qlnh_ttt.Activities.UpdateCategoryActivity;
 import com.example.qlnh_ttt.Entities.DmFood;
@@ -59,7 +58,6 @@ public class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.Catego
                     }
                 });
             }).start();
-
         }
     }
 

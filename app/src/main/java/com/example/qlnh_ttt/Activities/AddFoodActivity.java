@@ -45,7 +45,6 @@ import java.util.List;
 public class AddFoodActivity extends AppCompatActivity {
     private static final String TAG = "UploadImageActivity";
     private static final int PERMISSION_REQUEST_CODE = 100;
-    private static final String UPLOAD_URL = "http://172.16.1.2:8083/api/v1/food/add";
     private int dmFoodID;
     private ImageView imageView;
     private Button btnChooseImage, btnUpload;
@@ -57,7 +56,6 @@ public class AddFoodActivity extends AppCompatActivity {
     private Spinner spinnerDmFood;
     private List<DmFood> danhMucList;
     private ArrayAdapter<String> adapter;
-    private static final String GET_CATEGORIES_URL = "http://172.16.1.2:8083/api/v1/dmFood";
 
     private final ActivityResultLauncher<Intent> imagePickerLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
@@ -173,7 +171,7 @@ public class AddFoodActivity extends AppCompatActivity {
             return;
         }
 
-        progressBar.setVisibility(View.VISIBLE);
+//        progressBar.setVisibility(View.VISIBLE);
         btnUpload.setEnabled(false);
 
         new Thread(() -> {
@@ -199,7 +197,7 @@ public class AddFoodActivity extends AppCompatActivity {
                 jsonRequest.put("price", price);
                 jsonRequest.put("avtFood", base64Image);  // Gửi dạng base64 string
 
-                URL url = new URL(UPLOAD_URL);
+                URL url = new URL("http://172.16.1.2:8083/api/v1/food/add");
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("POST");
                 conn.setRequestProperty("Content-Type", "application/json");
@@ -239,7 +237,7 @@ public class AddFoodActivity extends AppCompatActivity {
                 });
             } finally {
                 runOnUiThread(() -> {
-                    progressBar.setVisibility(View.GONE);
+//                    progressBar.setVisibility(View.GONE);
                     btnUpload.setEnabled(true);
                 });
             }
@@ -294,7 +292,7 @@ public class AddFoodActivity extends AppCompatActivity {
                 SharedPreferences sharedPreferences = getSharedPreferences("AppPrefs", MODE_PRIVATE);
                 String token = sharedPreferences.getString("auth_token", "");
 
-                URL url = new URL("http://172.16.1.2:8082/api/v1/dmFood");
+                URL url = new URL("http://172.16.1.2:8083/api/v1/dmFood");
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("GET");
                 conn.setRequestProperty("Authorization", "Bearer " + token);

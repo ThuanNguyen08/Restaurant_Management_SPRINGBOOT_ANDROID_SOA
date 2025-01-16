@@ -3,9 +3,6 @@ package com.example.qlnh_ttt.Activities;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.os.Handler;
-import android.text.Editable;
-import android.text.TextWatcher;
 import android.util.Base64;
 import android.util.Log;
 import android.view.View;
@@ -20,7 +17,6 @@ import android.widget.Button;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
-import com.example.qlnh_ttt.AccoutType.AccoutType;
 import com.example.qlnh_ttt.Adapters.OrderFoodAdapter;
 import com.example.qlnh_ttt.Entities.DmFood;
 import com.example.qlnh_ttt.Entities.Food;
@@ -36,7 +32,6 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -79,14 +74,53 @@ public class OrderFoodActivity extends AppCompatActivity {
     }
 
 
-    // Thêm method để load danh mục
+
+    private void initViews() {
+        txtTableInfo = findViewById(R.id.txtTableInfo);
+        rvFoodOrder = findViewById(R.id.rvFoodOrder);
+        btnConfirmOrder = findViewById(R.id.btnConfirmOrder);
+        spinnerDmFood = findViewById(R.id.spinnerDmFood);
+        foodList = new ArrayList<>();
+        orderItems = new ArrayList<>();
+        danhMucList = new ArrayList<>();
+
+        // Khởi tạo adapter cho Spinner
+        categoryAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item);
+        categoryAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerDmFood.setAdapter(categoryAdapter);
+        loadCategories();
+
+
+        // Xử lý sự kiện khi chọn danh mục
+        spinnerDmFood.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+
+                if (position == 0) {
+                    // Nếu chọn "Tất cả"
+                    loadFoodMenu();
+                } else {
+                    // Lấy danh mục được chọn và load món ăn theo danh mục
+                    DmFood selectedCategory = danhMucList.get(position - 1);
+                    loadFoodsByCategory(selectedCategory.getDmFoodId());
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                // Không làm gì
+            }
+        });
+
+    }
+
     private void loadCategories() {
         new Thread(() -> {
             try {
                 SharedPreferences sharedPreferences = getSharedPreferences("AppPrefs", MODE_PRIVATE);
                 String token = sharedPreferences.getString("auth_token", "");
 
-                URL url = new URL("http://172.16.1.2:8082/api/v1/dmFood");
+                URL url = new URL("http://172.16.1.2:8083/api/v1/dmFood");
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("GET");
                 conn.setRequestProperty("Authorization", "Bearer " + token);
@@ -127,47 +161,6 @@ public class OrderFoodActivity extends AppCompatActivity {
                 Log.e(TAG, "Error loading categories: " + e.getMessage());
             }
         }).start();
-    }
-    private void initViews() {
-        txtTableInfo = findViewById(R.id.txtTableInfo);
-        rvFoodOrder = findViewById(R.id.rvFoodOrder);
-        btnConfirmOrder = findViewById(R.id.btnConfirmOrder);
-        spinnerDmFood = findViewById(R.id.spinnerDmFood);
-        foodList = new ArrayList<>();
-        orderItems = new ArrayList<>();
-        danhMucList = new ArrayList<>();
-
-        // Khởi tạo adapter cho Spinner
-        categoryAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item);
-        categoryAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinnerDmFood.setAdapter(categoryAdapter);
-        loadCategories();
-
-
-        // Xử lý sự kiện khi chọn danh mục
-        spinnerDmFood.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-
-                if (position == 0) {
-                    // Nếu chọn "Tất cả"
-                    loadFoodMenu();
-                } else {
-                    // Lấy danh mục được chọn và load món ăn theo danh mục
-                    DmFood selectedCategory = danhMucList.get(position - 1);
-                    loadFoodsByCategory(selectedCategory.getDmFoodId());
-                }
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-                // Không làm gì
-            }
-        });
-
-
-
-
     }
 
     private void loadFoodsByCategory(int categoryId) {
@@ -276,7 +269,7 @@ public class OrderFoodActivity extends AppCompatActivity {
                 String token = sharedPreferences.getString("auth_token", "");
 
                 // Gọi API để kiểm tra bill hiện tại của bàn
-                URL url = new URL("http://172.16.1.2:8085/api/v1/bills/table/" + tableId);
+                URL url = new URL("http://172.16.1.2:8086/api/v1/bills/table/" + tableId);
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("GET");
                 conn.setRequestProperty("Authorization", "Bearer " + token);
@@ -466,7 +459,7 @@ public class OrderFoodActivity extends AppCompatActivity {
                 SharedPreferences sharedPreferences = getSharedPreferences("AppPrefs", MODE_PRIVATE);
                 String token = sharedPreferences.getString("auth_token", "");
 
-                URL url = new URL("http://172.16.1.2:8085/api/v1/bills");
+                URL url = new URL("http://172.16.1.2:8086/api/v1/bills");
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("POST");
                 conn.setRequestProperty("Authorization", "Bearer " + token);

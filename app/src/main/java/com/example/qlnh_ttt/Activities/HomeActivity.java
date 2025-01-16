@@ -40,7 +40,7 @@ import org.json.JSONObject;
 
 public class HomeActivity extends AppCompatActivity {
 
-    private RelativeLayout layoutThongKe, layoutXemBan, layoutXemMenu, layoutXemDanhMuc;
+    private RelativeLayout  layoutXemBan, layoutXemMenu, layoutXemDanhMuc, layoutXemTaiKhoan;
     private TextView  txtViewAllStatistic;
     private ImageView btnLogout;
     private RecyclerView rcvDonTrongNgay;
@@ -59,17 +59,17 @@ public class HomeActivity extends AppCompatActivity {
         layoutXemBan = findViewById(R.id.layout_displayhome_XemBan);
         layoutXemMenu = findViewById(R.id.layout_displayhome_XemMenu);
         layoutXemDanhMuc = findViewById(R.id.layout_displayhome_XemDanhMuc);
+        RelativeLayout layoutXemTaiKhoan = findViewById(R.id.layout_displayhome_XemTaiKhoan);
+
         rcvDonTrongNgay = findViewById(R.id.rcv_displayhome_DonTrongNgay);
         btnLogout = findViewById(R.id.btn_logout);
 
         txtTotalRevenue = findViewById(R.id.txt_total_revenue);
         txtBillCount = findViewById(R.id.txt_bill_count);
         txtAllDoanhThu = findViewById(R.id.txt_allDoanhThu);
-<<<<<<< HEAD
 
-=======
         CheckAccount();
->>>>>>> 29f471256c5eddec99d6bd26f1ae0cea329e2753
+
 
         //sự kiện click cho nút logout
         btnLogout.setOnClickListener(new View.OnClickListener() {
@@ -115,11 +115,13 @@ public class HomeActivity extends AppCompatActivity {
             }
         });
 
-<<<<<<< HEAD
-=======
-
->>>>>>> 29f471256c5eddec99d6bd26f1ae0cea329e2753
-
+        layoutXemTaiKhoan.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(HomeActivity.this, AccountManagementActivity.class);
+                startActivity(intent);
+            }
+        });
 
         // Thiết lập RecyclerView
         setupRecyclerViews();
@@ -152,7 +154,7 @@ public class HomeActivity extends AppCompatActivity {
                 SharedPreferences sharedPreferences = getSharedPreferences("AppPrefs", MODE_PRIVATE);
                 String token = sharedPreferences.getString("auth_token", "");
 
-                URL url = new URL("http://172.16.1.2:8085/api/v1/bills");
+                URL url = new URL("http://172.16.1.2:8086/api/v1/bills");
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("GET");
                 conn.setRequestProperty("Authorization", "Bearer " + token);

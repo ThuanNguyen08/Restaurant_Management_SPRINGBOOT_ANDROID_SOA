@@ -5,6 +5,7 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Base64;
 import android.util.Log;
+import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -13,6 +14,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.qlnh_ttt.AccoutType.AccoutType;
 import com.example.qlnh_ttt.Adapters.FoodListAdapter;
 import com.example.qlnh_ttt.Entities.Food;
 import com.example.qlnh_ttt.R;
@@ -34,6 +36,7 @@ public class ItemCategoryActivity extends AppCompatActivity {
     private Button btnAddFood;
     private List<Food> foodList;
     private static final String TAG = "FoodListActivity";
+    private int currentCategoryId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,10 +47,11 @@ public class ItemCategoryActivity extends AppCompatActivity {
         btnAddFood = findViewById(R.id.btnAddFood);
         foodList = new ArrayList<Food>();
 
+        CheckAccount();
         setupRecyclerView();
 
         int categoryId = getIntent().getIntExtra("category_id", -1);
-
+        currentCategoryId = getIntent().getIntExtra("category_id", -1);
         loadFoodList(categoryId);
 
         btnAddFood.setOnClickListener(v -> {
@@ -134,5 +138,20 @@ public class ItemCategoryActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        loadFoodList(currentCategoryId);
+    }
+
+    public void CheckAccount(){
+        new Thread(() -> {
+            boolean isUser = AccoutType.isUser(ItemCategoryActivity.this);
+
+            runOnUiThread(() -> {
+                if(isUser){
+                    btnAddFood.setVisibility(View.GONE);
+                } else {
+                    btnAddFood.setVisibility(View.VISIBLE);
+                }
+            });
+        }).start();
     }
 }

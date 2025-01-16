@@ -48,11 +48,8 @@ public class TableActivity extends AppCompatActivity {
                 startActivity(intent);
             }
         });
-
         loadTables();
     }
-
-
 
     private void loadTables() {
         if (isLoading) return;

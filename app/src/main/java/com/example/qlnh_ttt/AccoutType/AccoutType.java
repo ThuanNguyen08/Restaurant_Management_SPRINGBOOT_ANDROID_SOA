@@ -27,7 +27,7 @@ public class AccoutType {
                 String accountType = in.readLine();
                 in.close();
 
-                return "user".equals(accountType);
+                return accountType.equals("user");
 
             } catch (Exception e) {
                 e.printStackTrace();

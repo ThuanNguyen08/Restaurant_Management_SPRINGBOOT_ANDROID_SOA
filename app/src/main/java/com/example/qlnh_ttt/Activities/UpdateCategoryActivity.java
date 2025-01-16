@@ -60,7 +60,7 @@ public class UpdateCategoryActivity extends AppCompatActivity {
                 SharedPreferences sharedPreferences = getSharedPreferences("AppPrefs", MODE_PRIVATE);
                 String token = sharedPreferences.getString("auth_token", "");
 
-                URL url = new URL("http://172.16.1.2:8082/api/v1/dmFood/add");
+                URL url = new URL("http://172.16.1.2:8083/api/v1/dmFood/add");
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("POST");
                 conn.setRequestProperty("Authorization", "Bearer " + token);

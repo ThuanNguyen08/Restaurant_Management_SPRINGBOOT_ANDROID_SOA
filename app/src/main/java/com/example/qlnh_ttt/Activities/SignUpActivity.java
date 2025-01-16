@@ -4,8 +4,10 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
@@ -17,8 +19,9 @@ import java.net.URL;
 
 public class SignUpActivity extends AppCompatActivity {
 
-    private EditText etUsername, etAccountType, etPassword1, etPassword2;
+    private EditText etUsername, etPassword1, etPassword2;
     private Button btnSignUp;
+    private Spinner spAccountType;
     private TextView tvLogin;
 
     @Override
@@ -26,13 +29,19 @@ public class SignUpActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.signup_layout);
 
-        // Khởi tạo các view
+        // ánh xạ tới các biến giao diện
         etUsername = findViewById(R.id.etUsername);
-        etAccountType = findViewById(R.id.etAccountType);
+        spAccountType = findViewById(R.id.spAccountType);
         etPassword1 = findViewById(R.id.etPassword1);
         etPassword2 = findViewById(R.id.etPassword2);
         btnSignUp = findViewById(R.id.btnSignUp);
         tvLogin = findViewById(R.id.tvLogin);
+
+        ArrayAdapter<CharSequence> adapter = new ArrayAdapter<>(this,
+                android.R.layout.simple_spinner_item,
+                new String[]{"user", "admin"});
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spAccountType.setAdapter(adapter);
 
         // Xử lý sự kiện đăng ký
         btnSignUp.setOnClickListener(new View.OnClickListener() {
@@ -53,14 +62,13 @@ public class SignUpActivity extends AppCompatActivity {
 
     private void signUp() {
         String username = etUsername.getText().toString().trim();
-        String accountType = etAccountType.getText().toString().trim();
+        String accountType = spAccountType.getSelectedItem().toString();
         String password1 = etPassword1.getText().toString().trim();
         String password2 = etPassword2.getText().toString().trim();
 
         // Kiểm tra thông tin nhập
         if (username.isEmpty() || accountType.isEmpty() || password1.isEmpty() || password2.isEmpty()) {
             if (username.isEmpty()) etUsername.setError("Thiếu Username");
-            if (accountType.isEmpty()) etAccountType.setError("Thiếu AccountType");
             if (password1.isEmpty()) etPassword1.setError("Nhập Password");
             if (password2.isEmpty()) etPassword2.setError("Nhập lại password để xác nhận");
             return;
@@ -94,6 +102,7 @@ public class SignUpActivity extends AppCompatActivity {
                     Log.d("SignUp", "Response Code: " + responseCode);
 
                     if (responseCode == HttpURLConnection.HTTP_OK) {
+                        createUserInfo(username);
                         runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
@@ -122,6 +131,29 @@ public class SignUpActivity extends AppCompatActivity {
             }
         }).start();
     }
+
+    private void createUserInfo(String username) {
+        new Thread(() -> {
+            try {
+                URL url = new URL("http://172.16.1.2:8080/api/v1/infoUser/add");
+                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                connection.setRequestMethod("POST");
+                connection.setRequestProperty("Content-Type", "application/json");
+                connection.setDoOutput(true);
+
+                String jsonBody = "{\"username\":\"" + username + "\"}";
+                OutputStream os = connection.getOutputStream();
+                os.write(jsonBody.getBytes());
+                os.flush();
+
+                int responseCode = connection.getResponseCode();
+                Log.d("CreateUserInfo", "Response Code: " + responseCode);
+            } catch (Exception e) {
+                Log.e("CreateUserInfo", "Error: " + e.getMessage());
+            }
+        }).start();
+    }
+
 
     private void goToLogin() {
         Intent intent = new Intent(SignUpActivity.this, LoginActivity.class);

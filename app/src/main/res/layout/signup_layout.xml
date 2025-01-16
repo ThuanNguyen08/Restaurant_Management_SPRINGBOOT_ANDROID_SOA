@@ -20,12 +20,10 @@
         android:hint="Username"
         android:inputType="text" />
 
-    <EditText
-        android:id="@+id/etAccountType"
+    <Spinner
+        android:id="@+id/spAccountType"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="AccountType"
-        android:inputType="textEmailAddress"
         android:layout_marginTop="10dp" />
 
     <EditText

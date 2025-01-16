@@ -90,7 +90,7 @@ public class CategoryActivity extends AppCompatActivity {
                 SharedPreferences sharedPreferences = getSharedPreferences("AppPrefs", MODE_PRIVATE);
                 String token = sharedPreferences.getString("auth_token", "");
 
-                URL url = new URL("http://172.16.1.2:8082/api/v1/dmFood");
+                URL url = new URL("http://172.16.1.2:8083/api/v1/dmFood");
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("GET");
                 conn.setRequestProperty("Authorization", "Bearer " + token);
@@ -151,7 +151,7 @@ public class CategoryActivity extends AppCompatActivity {
                 SharedPreferences sharedPreferences = getSharedPreferences("AppPrefs", MODE_PRIVATE);
                 String token = sharedPreferences.getString("auth_token", "");
 
-                URL url = new URL("http://172.16.1.2:8082/api/v1/dmFood/" + category.getDmFoodId());
+                URL url = new URL("http://172.16.1.2:8083/api/v1/dmFood/" + category.getDmFoodId());
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("DELETE");
                 conn.setRequestProperty("Authorization", "Bearer " + token);

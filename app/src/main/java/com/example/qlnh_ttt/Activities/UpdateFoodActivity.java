@@ -116,4 +116,5 @@ public class UpdateFoodActivity extends AppCompatActivity {
             }
         }).start();
     }
+
 }

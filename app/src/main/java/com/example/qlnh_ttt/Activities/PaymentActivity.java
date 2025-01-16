@@ -64,7 +64,7 @@ public class PaymentActivity extends AppCompatActivity {
     private void getIntentData() {
         tableId = getIntent().getIntExtra("table_id", -1);
         String tableName = getIntent().getStringExtra("table_name");
-        txtTableName.setText("Bàn " + tableName);
+        txtTableName.setText(tableName);
     }
 
     private void setupRecyclerView() {
@@ -128,7 +128,7 @@ public class PaymentActivity extends AppCompatActivity {
         SharedPreferences sharedPreferences = getSharedPreferences("AppPrefs", MODE_PRIVATE);
         String token = sharedPreferences.getString("auth_token", "");
 
-        URL url = new URL("http://172.16.1.2:8085/api/v1/bills/table/" + tableId);
+        URL url = new URL("http://172.16.1.2:8086/api/v1/bills/table/" + tableId);
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
         conn.setRequestMethod("GET");
         conn.setRequestProperty("Authorization", "Bearer " + token);
@@ -192,7 +192,7 @@ public class PaymentActivity extends AppCompatActivity {
         SharedPreferences sharedPreferences = getSharedPreferences("AppPrefs", MODE_PRIVATE);
         String token = sharedPreferences.getString("auth_token", "");
 
-        URL url = new URL("http://172.16.1.2:8085/api/v1/bills/total/" + billId);
+        URL url = new URL("http://172.16.1.2:8086/api/v1/bills/total/" + billId);
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
         conn.setRequestMethod("PUT");
         conn.setRequestProperty("Authorization", "Bearer " + token);
@@ -224,7 +224,7 @@ public class PaymentActivity extends AppCompatActivity {
                     SharedPreferences sharedPreferences = getSharedPreferences("AppPrefs", MODE_PRIVATE);
                     String token = sharedPreferences.getString("auth_token", "");
 
-                    URL url = new URL("http://172.16.1.2:8085/api/v1/bills/pay/" + billId);
+                    URL url = new URL("http://172.16.1.2:8086/api/v1/bills/pay/" + billId);
                     HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                     conn.setRequestMethod("PUT");
                     conn.setRequestProperty("Authorization", "Bearer " + token);

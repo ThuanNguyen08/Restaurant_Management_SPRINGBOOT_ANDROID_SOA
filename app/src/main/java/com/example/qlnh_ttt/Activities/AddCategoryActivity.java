@@ -73,7 +73,7 @@ public class AddCategoryActivity extends AppCompatActivity {
                 jsonRequest.put("categoryName", categoryName);
 
                 //ket noi api
-                URL url = new URL("http://172.16.1.2:8082/api/v1/dmFood/add");
+                URL url = new URL("http://172.16.1.2:8083/api/v1/dmFood/add");
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("POST");
                 conn.setRequestProperty("Content-Type", "application/json");

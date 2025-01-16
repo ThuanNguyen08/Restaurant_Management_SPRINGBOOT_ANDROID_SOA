@@ -27,18 +27,19 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 public class RevenueActivity extends AppCompatActivity {
 
-    private TextView tvStartDate, tvEndDate;
+    private TextView tvStartDate, tvEndDate, txtTotalRevenue, txtBillCount;
     private Button btnSearch;
     private RecyclerView rvBillList;
-
     private RevenueAdapter revenueAdapter;
     private List<Bill> billList = new ArrayList<>();
 
@@ -52,6 +53,8 @@ public class RevenueActivity extends AppCompatActivity {
         tvEndDate = findViewById(R.id.tvEndDate);
         btnSearch = findViewById(R.id.btnSearch);
         rvBillList = findViewById(R.id.rvBillList);
+        txtTotalRevenue = findViewById(R.id.txt_total_revenue);
+        txtBillCount = findViewById(R.id.txt_bill_count);
 
         // Thiết lập RecyclerView
         revenueAdapter = new RevenueAdapter(billList);
@@ -67,7 +70,100 @@ public class RevenueActivity extends AppCompatActivity {
         // Sự kiện nút tìm kiếm
         btnSearch.setOnClickListener(view -> searchBills());
 
-        loadTodayBills();
+        loadAllBills();
+    }
+
+    private void loadAllBills() {
+        new Thread(() -> {
+            try {
+                SharedPreferences sharedPreferences = getSharedPreferences("AppPrefs", MODE_PRIVATE);
+                String token = sharedPreferences.getString("auth_token", "");
+
+
+                URL url = new URL("http://172.16.1.2:8086/api/v1/bills");
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("GET");
+                conn.setRequestProperty("Authorization", "Bearer " + token);
+
+                int responseCode = conn.getResponseCode();
+                if (responseCode == HttpURLConnection.HTTP_OK) {
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+                    StringBuilder response = new StringBuilder();
+                    String line;
+
+                    while ((line = reader.readLine()) != null) {
+                        response.append(line);
+                    }
+
+                    JSONArray jsonArray = new JSONArray(response.toString());
+                    List<Bill> todayBills = new ArrayList<>();
+//                    LocalDate today = LocalDate.now();
+                    int totalRevenue = 0;
+                    int billCount = 0;
+
+                    for (int i = 0; i < jsonArray.length(); i++) {
+                        JSONObject billJson = jsonArray.getJSONObject(i);
+
+                        //format chuỗi string ngày kiểu datetime
+                        LocalDateTime billDate = LocalDateTime.parse(
+                                billJson.getString("billDate"),
+                                DateTimeFormatter.ISO_DATE_TIME
+                        );
+
+                        Bill bill = new Bill(
+                                billJson.getInt("billID"),
+                                billDate,
+                                billJson.getInt("userInfoID"),
+                                billJson.getInt("tableID"),
+                                billJson.getString("status"),
+                                billJson.getInt("totalAmount")
+                        );
+
+//                        if (billDate.toLocalDate().equals(today) && bill.getStatus().equalsIgnoreCase("PAID")) {
+                        todayBills.add(bill);
+                        totalRevenue += bill.getTotalAmount();
+                        billCount++;
+//                        }
+                    }
+
+                    final int finalTotalRevenue = totalRevenue;
+                    final int finalBillCount = billCount;
+
+                    // Cập nhật giao diện trên UI thread
+                    new Handler(Looper.getMainLooper()).post(() -> {
+                        billList.clear();
+                        billList.addAll(todayBills);
+                        revenueAdapter.notifyDataSetChanged();
+                        // Update statistics
+                        updateStatistics(finalTotalRevenue, finalBillCount);
+
+                        if (todayBills.isEmpty()) {
+                            Toast.makeText(this, "Ngày hôm nay chưa có hóa đơn nào.", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                } else {
+                    throw new IOException("Mã phản hồi: " + responseCode);
+                }
+
+                conn.disconnect();
+
+            } catch (IOException | JSONException e) {
+                e.printStackTrace();
+                new Handler(Looper.getMainLooper()).post(() -> {
+                    Toast.makeText(RevenueActivity.this, "Lỗi khi tải dữ liệu: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                });
+            }
+        }).start();
+    }
+
+    private void updateStatistics(int totalRevenue, int billCount) {
+        // Format currency in VND
+        NumberFormat formatter = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
+        String formattedRevenue = formatter.format(totalRevenue);
+
+        // Update UI elements
+        txtTotalRevenue.setText(formattedRevenue);
+        txtBillCount.setText("Số đơn: " + billCount);
     }
 
     private void showDatePickerDialog(TextView targetView) {
@@ -92,9 +188,14 @@ public class RevenueActivity extends AppCompatActivity {
 
         // Lọc danh sách hóa đơn theo ngày
         List<Bill> filteredBills = new ArrayList<>();
+        int totalRevenue = 0;
+        int billCount = 0;
+
         for (Bill bill : billList) {
             if (bill.getBillDate().isAfter(startDate) && bill.getBillDate().isBefore(endDate)) {
                 filteredBills.add(bill);
+                totalRevenue += bill.getTotalAmount();
+                billCount++;
             }
         }
 
@@ -104,79 +205,8 @@ public class RevenueActivity extends AppCompatActivity {
 
         // Cập nhật RecyclerView
         revenueAdapter.updateData(filteredBills);
-    }
 
-    private void loadTodayBills() {
-        new Thread(() -> {
-            try {
-                SharedPreferences sharedPreferences = getSharedPreferences("AppPrefs", MODE_PRIVATE);
-                String token = sharedPreferences.getString("auth_token", "");
-
-
-                URL url = new URL("http://172.16.1.2:8085/api/v1/bills");
-                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                conn.setRequestMethod("GET");
-                conn.setRequestProperty("Authorization", "Bearer " + token);
-
-                int responseCode = conn.getResponseCode();
-                if (responseCode == HttpURLConnection.HTTP_OK) {
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-                    StringBuilder response = new StringBuilder();
-                    String line;
-
-                    while ((line = reader.readLine()) != null) {
-                        response.append(line);
-                    }
-
-                    JSONArray jsonArray = new JSONArray(response.toString());
-                    List<Bill> todayBills = new ArrayList<>();
-//                    LocalDate today = LocalDate.now();
-
-                    for (int i = 0; i < jsonArray.length(); i++) {
-                        JSONObject billJson = jsonArray.getJSONObject(i);
-
-                        //format chuỗi string ngày kiểu datetime
-                        LocalDateTime billDate = LocalDateTime.parse(
-                                billJson.getString("billDate"),
-                                DateTimeFormatter.ISO_DATE_TIME
-                        );
-
-                        Bill bill = new Bill(
-                                billJson.getInt("billID"),
-                                billDate,
-                                billJson.getInt("userInfoID"),
-                                billJson.getInt("tableID"),
-                                billJson.getString("status"),
-                                billJson.getInt("totalAmount")
-                        );
-
-//                        if (billDate.toLocalDate().equals(today) && bill.getStatus().equalsIgnoreCase("PAID")) {
-                        todayBills.add(bill);
-//                        }
-                    }
-
-                    // Cập nhật giao diện trên UI thread
-                    new Handler(Looper.getMainLooper()).post(() -> {
-                        billList.clear();
-                        billList.addAll(todayBills);
-                        revenueAdapter.notifyDataSetChanged();
-
-                        if (todayBills.isEmpty()) {
-                            Toast.makeText(this, "Ngày hôm nay chưa có hóa đơn nào.", Toast.LENGTH_SHORT).show();
-                        }
-                    });
-                } else {
-                    throw new IOException("Mã phản hồi: " + responseCode);
-                }
-
-                conn.disconnect();
-
-            } catch (IOException | JSONException e) {
-                e.printStackTrace();
-                new Handler(Looper.getMainLooper()).post(() -> {
-                    Toast.makeText(RevenueActivity.this, "Lỗi khi tải dữ liệu: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                });
-            }
-        }).start();
+        // Cập nhật thống kê
+        updateStatistics(totalRevenue, billCount);
     }
 }
